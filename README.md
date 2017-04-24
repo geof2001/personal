@@ -38,14 +38,14 @@ To add a new set of credentials and store them as a different profile:
 To create/update monitors:
 - python ddtool.py deploy [ENVIRONMENT] ddf_monitors_[servicename]_template.yaml
 
-Get all existing datadog monitors that contain the string "SR PROD" in the name into ddf_monitors_main_SR_PROD.yaml
-- python ddtool.py save monitors "SR PROD"
+Get all existing datadog monitors that contain the string "PROD" in the name into ddf_monitors_main_PROD.yaml
+- python ddtool.py save monitors "PROD"
 
 Get all exisiting datadog monitors into ddf_monitors_main.yaml
 - python ddtool.py save monitors
 
 List monitors to your screen
-- python ddtool.py list "SR PROD all aws.dynamodb.write"
+- python ddtool.py list "PROD all aws.dynamodb.write"
 Jenkins job for Datadog: https://jenkinscd.tools.sr.roku.com/job/sr-zoo-datadog/
 
 **YAML files contain monitors**
@@ -72,7 +72,7 @@ REQUIREMENTS
 
 TROUBLESHOOTING
 ===============
-- If you get unforeseen errors please open a Jira ticket under SR-INFRA and we'll take a look at it.
+- If you get unforeseen errors please open a request and I'll take a look at it.
 
 
 FUTURE
