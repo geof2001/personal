@@ -53,7 +53,7 @@ Jenkins job for Datadog: https://jenkinscd.tools.sr.roku.com/job/sr-zoo-datadog/
 BETA
 =====
 - Currently deleting monitors if name changed is not supported but enable creating and updating
-- Monitors support differing thresholds by account to support monitor testing within accounts other than SRPROD
+- Monitors support differing thresholds by account to support monitor testing within accounts other than PROD
 - ddtool.py has a setup function to store API/Integration keys in users home folder under .ddtools/creds
 - ddtool.py can be used to list monitors, save them to a YAML file and deploy(create/update) monitors
 - run ddtool.py -h or --help for 
