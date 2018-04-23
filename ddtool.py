@@ -579,7 +579,7 @@ def get_parser():
     parsers[action].add_argument("objectType", type=str, help='monitors/timeboards')
     parsers[action].add_argument("environment", type=str,
                                  help=("Which environment are you deploying to.\n"
-                                       "e.g. PROD, STG, QA, DEV, ZOO"))
+                                       "e.g. PROD, QA, DEV"))
     parsers[action].add_argument("yamlFile", type=str,
                                  help="The name of the yaml file to deploy")
     parsers[action].add_argument("--forceupdate", action='store_true',
