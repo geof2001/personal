@@ -1,0 +1,82 @@
+#!/bin/sh
+
+function usage()
+{
+    echo "\nPull all, one or some of your cloned repo's with this command."
+    echo ""
+    echo "./pull"
+    echo "\t-h --help\t\t# shows this message"
+    echo "\t--gitpath /git\t\t# override your \$GITPATH"
+    echo "\t-s --status repo\t# show status of the given repository"
+    echo "\t repo1 repo2\t\t# pull just the repo(s) specified"
+    echo "\t all \t\t\t# To pull all repo's in your \$GITPATH\n"
+    echo ""
+    if [ -z ${GITPATH} ]
+        then
+        echo "Your \$GITPATH is not set please specify with --gitpath or set the environment variable."
+    else
+        echo "Your \$GITPATH is set to '$GITPATH'"
+    fi
+    echo ""
+}
+
+function status()
+{
+    cd $GITPATH/$REPO
+    echo "##########################################\nGit status for repository: $REPO\n##########################################"
+    git status
+}
+
+function pull()
+{
+    cd $GITPATH/$REPO
+    # pwd
+    echo "################################\nPulling $REPO\n################################"
+    git status; git stash; git pull -r; git stash pop
+}
+
+if [ -z ${GITPATH} ]
+    then
+    echo "You must specify --gitpath or set an environment variable \$GITPATH"
+    usage
+    #exit
+fi
+
+if [ -z ${1} ]
+    then
+    usage
+fi
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help)    usage
+                        exit
+                        ;;
+        --gitpath)        shift
+                        export GITPATH=$1
+                        cd $GITPATH
+                        pwd
+                        ;;
+        -s | --status)  shift
+                        REPO=$1
+                        status
+                        ;;
+        all)            for i in `ls ${GITPATH}`
+                        do
+                        REPO=$i
+                        pull $REPO
+                        done
+                        ;;
+        *)                if [ -Z ${GITPATH} ]
+                            then
+                            # echo "You must specify --gitpath or set an environment variable \$GITPATH"
+                            exit
+                        fi
+                        echo "Trying to pull $1"
+                        cd $GITPATH
+                        REPO=$1
+                        pull $REPO
+                        ;;
+    esac
+    shift
+done

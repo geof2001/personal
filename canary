@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+script_location=`readlink $0` || true
+if [ "$script_location" = "" ]; then
+    script_location=$0
+fi
+
+dirname=`dirname $script_location`
+basename=`basename $script_location`
+
+set -x
+if [ -e "$script_location.py" ]; then
+    cd $dirname
+    python $basename.py "$@"
+else
+    cd $dirname
+    python canary_keeper.py "$@"
+fi
