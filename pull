@@ -52,22 +52,28 @@ while [ "$1" != "" ]; do
         -h | --help)    usage
                         exit
                         ;;
+
         --gitpath)        shift
                         export GITPATH=$1
                         cd $GITPATH
                         pwd
                         ;;
+
         -s | --status)  shift
                         REPO=$1
                         status
                         ;;
+
         all)            for i in `ls ${GITPATH}`
                         do
                         REPO=$i
                         pull $REPO
                         done
                         ;;
-        *)                if [ -Z ${GITPATH} ]
+
+        .)              git status; git stash; git pull -r; git stash pop
+			
+        *)              if [ -Z ${GITPATH} ]
                             then
                             # echo "You must specify --gitpath or set an environment variable \$GITPATH"
                             exit
@@ -80,3 +86,6 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
+
+
+    
