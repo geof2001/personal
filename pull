@@ -72,7 +72,8 @@ while [ "$1" != "" ]; do
                         ;;
 
         .)              git status; git stash; git pull -r; git stash pop
-			
+                        ;;
+
         *)              if [ -Z ${GITPATH} ]
                             then
                             # echo "You must specify --gitpath or set an environment variable \$GITPATH"
