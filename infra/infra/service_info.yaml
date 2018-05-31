@@ -1,0 +1,211 @@
+# Defines basic service settings for infra
+
+# some basic info for the service
+repository_name: infra
+persistent_branches:
+    - master
+
+# settings for sub-component in the service for build, deploy, and test.
+# methods for build/deploy/test will be defined in the pipeline controller code.
+
+components:
+    iam-layer:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/iam-layer
+            image_name: None
+
+        properties_table:
+            stack_name: iam-layer
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+    
+    sr-data:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/sr-data
+            image_name: None
+
+        properties_table:
+            stack_name: sr-data
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+    
+    multiregion-notifications:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/multiregion-notifications
+            image_name: None
+
+        properties_table:
+            stack_name: multiregion-notifications
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+    
+    roku-network:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/roku-network
+            image_name: None
+
+        properties_table:
+            stack_name: roku-network
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+    
+    sr-blue-batch:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/sr-blue-batch
+            image_name: None
+
+        properties_table:
+            stack_name: sr-blue-batch
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+    
+    sr-clusters:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/sr-clusters
+            image_name: None
+
+        properties_table:
+            stack_name: sr-clusters
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+                
+    sr-es:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/sr-es
+            image_name: None
+
+        properties_table:
+            stack_name: sr-es
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+    
+    sr-global-services:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/sr-global-services
+            image_name: None
+
+        properties_table:
+            stack_name: sr-global-services
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+    
+    us-east-1-only:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/us-east-1-only
+            image_name: None
+
+        properties_table:
+            stack_name: us-east-1-only
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+    
+    sr-blue:
+        deploy:
+            method: CF_deploy_V1
+            params:
+                stack_file: infra/sr-blue
+            image_name: None
+
+        properties_table:
+            stack_name: sr-blue
+
+        regions:
+            dev:
+                - us-east-1
+                - us-west-2
+            qa:
+                - us-east-1
+            prod:
+                - us-east-1
+                - us-west-2
+

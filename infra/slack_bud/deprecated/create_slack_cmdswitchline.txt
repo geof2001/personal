@@ -1,0 +1,3 @@
+        elif args.command[0] == '{cmdlowercase}':
+            return Cmd{cmd}().invoke_sub_command(sub_command, args)
+# {cmdswitchline}

@@ -1,0 +1,45 @@
+version: 0.2
+
+env:
+  variables:
+    DEBIAN_FRONTEND: "noninteractive"
+
+phases:
+  install:
+    commands:
+      - echo Build started on `date`
+      - apt-get update -y
+      - echo Adding AWS CLI
+      - pip install awscli --upgrade
+      - apt-get install -y curl
+      - curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+      - apt-get install -y nodejs
+      - echo Node version `node -v`
+      - echo Nmp version before update `npm -v`
+      - npm install npm --global
+      - echo Nmp version after update `npm -v`
+      - npm install -g serverless
+  pre_build:
+    commands:
+      - echo Entering pre_build phase... verifying state
+      - echo `which aws`
+      - echo AWS CLI version `aws --version`
+      - echo `which curl`
+      - echo `which node`
+      - echo `which npm`
+  build:
+    commands:
+      - echo Entering build phase...
+      - echo `serverless --version`
+      - cd ./slack_bud
+      - echo `pwd`
+      - echo `ls`
+      - echo Deploying /budev
+      - serverless deploy --stage dev --slackToken ssm_param --entryPoint lambda_function.lambda_handler
+      - echo Deploying /bud
+      - serverless deploy --stage prod --slackToken dzwpUtzsi7vgvkGmjUYj0Jpl --entryPoint lambda_function.lambda_handler
+      - echo Deploying /buddev2
+      - serverless deploy --stage qa --slackToken jZC06GGnNtrmcpn5M2XRdGK5 --entryPoint lambda_function.lambda_handler
+  post_build:
+    commands:
+      - echo Entering post_build phase...

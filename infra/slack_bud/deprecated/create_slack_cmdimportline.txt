@@ -1,0 +1,2 @@
+from cmds.cmds_{cmdlowercase} import Cmd{cmd}
+# {cmdimportline}

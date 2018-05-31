@@ -1,0 +1,1680 @@
+Description: Template specifying the configuration of data stack for elasticsearch, redis and dynamo
+
+Parameters:
+  CmsDbFilesS3BucketExpirationInDays:
+    Default: 3
+    Description: Number of days to expire the s3 bucket objects
+    Type: Number
+  CmsDbFilesS3BucketNoncurrentExpiration:
+    Default: 60
+    Description: Number of days to delete the expired content
+    Type: Number
+  CmsDoneFilesS3BucketExpirationInDays:
+    Default: 3
+    Description: Number of days to expire the s3 bucket objects
+    Type: Number
+  CmsDoneFilesS3BucketNoncurrentExpiration:
+    Default: 60
+    Description: Number of days to delete the expired content
+    Type: Number
+  DataTeamARN:
+    Description: Data Team's ARN to connect to CMS S3 buckets
+    Type: String
+  ElasticsearchClusterConfigDedicatedMasterCount:
+    Default: 3
+    Description: Dedicated master count, es recommends 3
+    Type: Number
+  ElasticsearchClusterConfigDedicatedMasterEnabled:
+    AllowedPattern: \S+
+    Default: 'false'
+    Description: Enabling elasticsearch dedicated master
+    Type: String
+  ElasticsearchClusterConfigDedicatedMasterType:
+    AllowedPattern: \S+
+    Default: m3.medium.elasticsearch
+    Description: Hardware configuration of the computer that hosts the dedicated master
+      node
+    Type: String
+  ElasticsearchClusterConfigInstanceCount:
+    Default: 2
+    Description: The number of data nodes (instances) to use in the Amazon ES domain
+    Type: Number
+  ElasticsearchClusterConfigInstanceType:
+    AllowedPattern: \S+
+    Default: m3.medium.elasticsearch
+    Description: The instance type for your data nodes
+    Type: String
+  ElasticsearchClusterConfigZoneAwarenessEnabled:
+    AllowedPattern: \S+
+    Default: 'true'
+    Description: The instance type for your data nodes
+    Type: String
+  ElasticsearchEBSOptionsEBSEnabled:
+    AllowedPattern: \S+
+    Default: 'true'
+    Description: Specifies whether Amazon EBS volumes are attached to data nodes in
+      the Amazon ES domain
+    Type: String
+  ElasticsearchEBSOptionsIops:
+    Default: 1000
+    Description: The number of I/O operations per second (IOPS) that the volume supports.
+      This property applies only to the Provisioned IOPS (SSD) EBS volume type.
+    Type: Number
+  ElasticsearchEBSOptionsVolumeSize:
+    Default: 10
+    Description: he size of the EBS volume for each data node.
+    Type: Number
+  ElasticsearchEBSOptionsVolumeType:
+    AllowedPattern: \S+
+    Default: gp2
+    Description: The EBS volume type to use with the Amazon ES domain, such as standard,
+      gp2, or io1.
+    Type: String
+
+  PopularityFetcherBucketExpirationInDays:
+    Default: 15
+    Description: Number of days to expire the s3 bucket objects
+    Type: Number
+  AthenaQueryBucketExpirationInDays:
+    Default: 1
+    Description: Number of days to expire the s3 bucket objects
+    Type: Number
+  PopularityResultsBucketExpirationInDays:
+    Default: 7
+    Description: Number of days to expire the s3 bucket objects
+    Type: Number
+
+  SearchElasticsearchVersion:
+    Default: 1.5
+    Description: Version of Elasticsearch to run
+    Type: String
+  SearchElasticsearchClusterConfigDedicatedMasterCount:
+    Default: 3
+    Description: Dedicated master count, es recommends 3
+    Type: Number
+  SearchElasticsearchClusterConfigDedicatedMasterEnabled:
+    AllowedPattern: \S+
+    Default: 'false'
+    Description: Enabling elasticsearch dedicated master
+    Type: String
+  SearchElasticsearchClusterConfigDedicatedMasterType:
+    AllowedPattern: \S+
+    Default: m3.medium.elasticsearch
+    Description: Hardware configuration of the computer that hosts the dedicated master
+      node
+    Type: String
+  SearchElasticsearchClusterConfigInstanceCount:
+    Default: 2
+    Description: The number of data nodes (instances) to use in the Amazon ES domain
+    Type: Number
+  SearchElasticsearchClusterConfigInstanceType:
+    AllowedPattern: \S+
+    Default: m3.medium.elasticsearch
+    Description: The instance type for your data nodes
+    Type: String
+  SearchElasticsearchClusterConfigZoneAwarenessEnabled:
+    AllowedPattern: \S+
+    Default: 'true'
+    Description: The instance type for your data nodes
+    Type: String
+  SearchElasticsearchEBSOptionsEBSEnabled:
+    AllowedPattern: \S+
+    Default: 'true'
+    Description: Specifies whether Amazon EBS volumes are attached to data nodes in
+      the Amazon ES domain
+    Type: String
+  SearchElasticsearchEBSOptionsIops:
+    Default: 1000
+    Description: The number of I/O operations per second (IOPS) that the volume supports.
+      This property applies only to the Provisioned IOPS (SSD) EBS volume type.
+    Type: Number
+  SearchElasticsearchEBSOptionsVolumeSize:
+    Default: 10
+    Description: he size of the EBS volume for each data node.
+    Type: Number
+  SearchElasticsearchEBSOptionsVolumeType:
+    AllowedPattern: \S+
+    Default: gp2
+    Description: The EBS volume type to use with the Amazon ES domain, such as standard,
+      gp2, or io1.
+    Type: String
+
+
+  ElasticsearchWhitelistedIPs:
+    Default: 50.224.7.192/26,50.224.7.64/26,50.224.7.32/27,50.224.7.128/26,52.8.254.63/32,216.38.147.4/32,52.40.46.133/32
+    Description: List of whitelisted IPs for ElasticSearch
+    Type: CommaDelimitedList
+
+  NetworkStackName:
+    AllowedPattern: \S+
+    Default: roku-network
+    Description: Name of network stack
+    Type: String
+
+  EnableHomescreenStreamParam:
+    Default: false
+    Description: Enable Steaming on Homescreen Dymamo Tables for multi-region support
+    Type: String
+    AllowedValues:
+      - true
+      - false
+
+Conditions:
+  BucketRegion: !Equals [!Ref "AWS::Region", 'us-east-1']
+  DeployEastRegionOnly: !Equals [!Ref "AWS::Region", 'us-east-1']
+  DeployMultiRegion: !Or [!Equals [!Ref "AWS::Region", 'us-east-1'], !Equals [!Ref "AWS::Region", 'us-west-2']]
+  UseBookmarkerRedisSnapshot: !Or [!Equals [!Ref "AWS::AccountId", '638782101961'], !Equals [!Ref "AWS::AccountId", '886239521314']]
+  DeploySRSearchES: !Equals [!Ref "AWS::AccountId", '886239521315']
+  ESVersionUSWest2Only: !Equals [!Ref "AWS::Region", 'us-west-2']
+  CreateCMSDynamoDBTables: !And [!Equals [!Ref "AWS::Region", 'us-east-1'], !Equals [!Ref "AWS::AccountId", '886239521314']]
+  CreateElasticsearchMasterNodes: !Equals [!Ref ElasticsearchClusterConfigDedicatedMasterEnabled, 'true']
+  SearchCreateElasticsearchMasterNodes: !Equals [!Ref SearchElasticsearchClusterConfigDedicatedMasterEnabled, 'true']
+  WBMEnvironment: !And [!Equals [!Ref "AWS::Region", 'us-east-1'], !Equals [!Ref "AWS::AccountId", '638782101961']]
+  CreateSearchClusterInProd: !Or [!Equals [!Ref "AWS::AccountId", '886239521314'], !Equals [!Ref "AWS::AccountId", '181133766305']]
+  EnableHomescreenStream: !Equals [!Ref EnableHomescreenStreamParam, true]
+
+Mappings:
+  AccountMap:
+    eu-west-1:
+      '181133766305': 181133766305.eu-west-1
+      '638782101961': 638782101961.eu-west-1
+      '886239521314': 886239521314.eu-west-1
+    us-east-1:
+      '181133766305': 181133766305.us-east-1
+      '638782101961': 638782101961.us-east-1
+      '886239521314': 886239521314.us-east-1
+    us-west-2:
+      '181133766305': 181133766305.us-west-2
+      '638782101961': 638782101961.us-west-2
+      '886239521314': 886239521314.us-west-2
+
+  RegionMap:
+    181133766305.us-east-1:
+      TitanChannelIndexesTableReadCapacity: '5'
+      TitanChannelIndexesTableWriteCapacity: '5'
+      CmsChannelCategoriesReadCapacity: '10'
+      CmsChannelCategoriesWriteCapacity: '10'
+      CmsChannelDataSetReadCapacity: '5'
+      CmsChannelDataSetWriteCapacity: '5'
+      CmsEpisodesReadCapacity: '10'
+      CmsEpisodesWriteCapacity: '100'
+      CmsEtlJobsHistoryReadCapacity: '5'
+      CmsEtlJobsHistoryWriteCapacity: '5'
+      CmsEtlJobsReadCapacity: '5'
+      CmsEtlJobsWriteCapacity: '5'
+      CmsGuidsReadCapacity: '1'
+      CmsGuidsWriteCapacity: '1'
+      CmsLoaderDoneFileReadCapacity: '5'
+      CmsLoaderDoneFileWriteCapacity: '5'
+      CmsTopLevelProgramsReadCapacity: '100'
+      CmsTopLevelProgramsWriteCapacity: '100'
+      DevicePermissionsReadCapacity: '5'
+      DevicePermissionsWriteCapacity: '5'
+      DownloaderAuthenticationReadCapacity: '20'
+      DownloaderAuthenticationWriteCapacity: '10'
+      DownloaderChannelsReadCapacity: '20'
+      DownloaderChannelsWriteCapacity: '30'
+      DownloaderJobsReadCapacity: '10'
+      DownloaderJobsWriteCapacity: '10'
+      FeedGroupsReadCapacity: '10'
+      FeedGroupsWriteCapacity: '10'
+      HomescreenCollectionsReadCapacity: '10'
+      HomescreenCollectionsWriteCapacity: '10'
+      HomescreenPagesReadCapacity: '10'
+      HomescreenPagesWriteCapacity: '10'
+      AdPoliciesReadCapacity: '10'
+      AdPoliciesWriteCapacity: '10'
+      TokenKeysV2ReadCapacity: '5'
+      TokenKeysV2WriteCapacity: '5'
+      bookmarkerReadCapacity: '25'
+      bookmarkerWriteCapacity: '25'
+      bookmarkerMaxReadCapacity: '100'
+      bookmarkerMaxWriteCapacity: '100'
+      bookmarkerProfileUpdateReadCapacity: '25'
+      bookmarkerProfileUpdateWriteCapacity: '25'
+      bookmarkershards: 2
+      cmsEtlJobsKinesisStreamShards: 4
+      SearchConfigurationReadCapacity: '400'
+      SearchConfigurationWriteCapacity: '20'
+      homescreenRedisShards: 3
+      homescreenRedisv3InstanceType: cache.t2.medium
+      bookmarkerRedisShards: 3
+      bookmarkerRedisInstanceType: cache.t2.medium
+      BookmarkerRedisSnapshotArn: ''
+    638782101961.us-east-1:
+      TitanChannelIndexesTableReadCapacity: '5'
+      TitanChannelIndexesTableWriteCapacity: '5'
+      CmsChannelCategoriesReadCapacity: '10'
+      CmsChannelCategoriesWriteCapacity: '10'
+      CmsChannelDataSetReadCapacity: '5'
+      CmsChannelDataSetWriteCapacity: '5'
+      CmsEpisodesReadCapacity: '10'
+      CmsEpisodesWriteCapacity: '10'
+      CmsEtlJobsHistoryReadCapacity: '5'
+      CmsEtlJobsHistoryWriteCapacity: '5'
+      CmsEtlJobsReadCapacity: '5'
+      CmsEtlJobsWriteCapacity: '5'
+      CmsGuidsReadCapacity: '1'
+      CmsGuidsWriteCapacity: '1'
+      CmsLoaderDoneFileReadCapacity: '2'
+      CmsLoaderDoneFileWriteCapacity: '2'
+      CmsTopLevelProgramsReadCapacity: '30'
+      CmsTopLevelProgramsWriteCapacity: '60'
+      DevicePermissionsReadCapacity: '5'
+      DevicePermissionsWriteCapacity: '5'
+      DownloaderAuthenticationReadCapacity: '10'
+      DownloaderAuthenticationWriteCapacity: '10'
+      DownloaderChannelsReadCapacity: '40'
+      DownloaderChannelsWriteCapacity: '40'
+      DownloaderJobsReadCapacity: '10'
+      DownloaderJobsWriteCapacity: '10'
+      FeedGroupsReadCapacity: '10'
+      FeedGroupsWriteCapacity: '10'
+      HomescreenCollectionsReadCapacity: '10'
+      HomescreenCollectionsWriteCapacity: '10'
+      HomescreenPagesReadCapacity: '10'
+      HomescreenPagesWriteCapacity: '10'
+      AdPoliciesReadCapacity: '10'
+      AdPoliciesWriteCapacity: '10'
+      TokenKeysV2ReadCapacity: '5'
+      TokenKeysV2WriteCapacity: '5'
+      bookmarkerReadCapacity: '25'
+      bookmarkerWriteCapacity: '25'
+      bookmarkerMaxReadCapacity: '100'
+      bookmarkerMaxWriteCapacity: '100'
+      bookmarkerProfileUpdateReadCapacity: '25'
+      bookmarkerProfileUpdateWriteCapacity: '25'
+      bookmarkershards: 2
+      cmsEtlJobsKinesisStreamShards: 4
+      SearchConfigurationReadCapacity: '400'
+      SearchConfigurationWriteCapacity: '20'
+      homescreenRedisShards: 3
+      homescreenRedisv3InstanceType: cache.t2.medium
+      bookmarkerRedisShards: 3
+      bookmarkerRedisInstanceType: cache.t2.medium
+      BookmarkerRedisSnapshotArn: 'arn:aws:s3:::sr-epg-test-guil/bookmarker-backp-0001-1.rdb'
+    638782101961.us-west-2:
+      bookmarkershards: 2
+      CmsChannelCategoriesReadCapacity: '5'
+      CmsChannelCategoriesWriteCapacity: '5'
+      CmsChannelDataSetReadCapacity: '5'
+      CmsChannelDataSetWriteCapacity: '5'
+      CmsEpisodesReadCapacity: '5'
+      CmsEpisodesWriteCapacity: '5'
+      CmsEtlJobsHistoryReadCapacity: '5'
+      CmsEtlJobsHistoryWriteCapacity: '5'
+      CmsEtlJobsReadCapacity: '5'
+      CmsEtlJobsWriteCapacity: '5'
+      CmsGuidsReadCapacity: '1'
+      CmsGuidsWriteCapacity: '1'
+      CmsLoaderDoneFileReadCapacity: '2'
+      CmsLoaderDoneFileWriteCapacity: '2'
+      CmsTopLevelProgramsReadCapacity: '5'
+      CmsTopLevelProgramsWriteCapacity: '5'
+      homescreenRedisShards: 3
+      homescreenRedisv3InstanceType: cache.t2.medium
+      bookmarkerRedisShards: 3
+      bookmarkerRedisInstanceType: cache.t2.medium
+      BookmarkerRedisSnapshotArn: 'arn:aws:s3:::sr-epg-test-guil/bookmarker-backp-0001-1.rdb'
+    886239521314.us-east-1:
+      TitanChannelIndexesTableReadCapacity: '5'
+      TitanChannelIndexesTableWriteCapacity: '5'
+      CmsChannelCategoriesReadCapacity: '100'
+      CmsChannelCategoriesWriteCapacity: '50'
+      CmsChannelDataSetReadCapacity: '100'
+      CmsChannelDataSetWriteCapacity: '5'
+      CmsEpisodesReadCapacity: '200'
+      CmsEpisodesWriteCapacity: '700'
+      CmsEtlJobsHistoryReadCapacity: '30'
+      CmsEtlJobsHistoryWriteCapacity: '10'
+      CmsEtlJobsReadCapacity: '20'
+      CmsEtlJobsWriteCapacity: '20'
+      CmsGuidsReadCapacity: '1'
+      CmsGuidsWriteCapacity: '1'
+      CmsLoaderDoneFileReadCapacity: '5'
+      CmsLoaderDoneFileWriteCapacity: '5'
+      CmsTopLevelProgramsReadCapacity: '5000'
+      CmsTopLevelProgramsWriteCapacity: '1000'
+      DevicePermissionsReadCapacity: '20'
+      DevicePermissionsWriteCapacity: '5'
+      DownloaderAuthenticationReadCapacity: '40'
+      DownloaderAuthenticationWriteCapacity: '20'
+      DownloaderChannelsReadCapacity: '80'
+      DownloaderChannelsWriteCapacity: '40'
+      DownloaderJobsReadCapacity: '40'
+      DownloaderJobsWriteCapacity: '80'
+      FeedGroupsReadCapacity: '10'
+      FeedGroupsWriteCapacity: '10'
+      HomescreenCollectionsReadCapacity: '50'
+      HomescreenCollectionsWriteCapacity: '10'
+      HomescreenPagesReadCapacity: '50'
+      HomescreenPagesWriteCapacity: '10'
+      AdPoliciesReadCapacity: '50'
+      AdPoliciesWriteCapacity: '10'
+      TokenKeysV2ReadCapacity: '5'
+      TokenKeysV2WriteCapacity: '5'
+      bookmarkerReadCapacity: '1000'
+      bookmarkerWriteCapacity: '100'
+      bookmarkerMaxReadCapacity: '2000'
+      bookmarkerMaxWriteCapacity: '3000'
+      bookmarkerProfileUpdateReadCapacity: '1000'
+      bookmarkerProfileUpdateWriteCapacity: '400'
+      bookmarkershards: 4
+      cmsEtlJobsKinesisStreamShards: 12
+      SearchConfigurationReadCapacity: '500'
+      SearchConfigurationWriteCapacity: '40'
+      homescreenRedisShards: 3
+      homescreenRedisv3InstanceType: cache.r4.large
+      bookmarkerRedisShards: 3
+      bookmarkerRedisInstanceType: cache.r4.large
+      BookmarkerRedisSnapshotArn: 'arn:aws:s3:::sr-bookmarker-backup-886239521314/redis/bookmarker-2018-02-22-0001.rdb'
+    886239521314.us-west-2:
+      TitanChannelIndexesTableReadCapacity: '5'
+      TitanChannelIndexesTableWriteCapacity: '5'
+      CmsChannelCategoriesReadCapacity: '100'
+      CmsChannelCategoriesWriteCapacity: '50'
+      CmsChannelDataSetReadCapacity: '100'
+      CmsChannelDataSetWriteCapacity: '5'
+      CmsEpisodesReadCapacity: '200'
+      CmsEpisodesWriteCapacity: '700'
+      CmsEtlJobsHistoryReadCapacity: '30'
+      CmsEtlJobsHistoryWriteCapacity: '10'
+      CmsEtlJobsReadCapacity: '20'
+      CmsEtlJobsWriteCapacity: '20'
+      CmsGuidsReadCapacity: '1'
+      CmsGuidsWriteCapacity: '1'
+      CmsLoaderDoneFileReadCapacity: '5'
+      CmsLoaderDoneFileWriteCapacity: '5'
+      CmsTopLevelProgramsReadCapacity: '5000'
+      CmsTopLevelProgramsWriteCapacity: '1000'
+      DevicePermissionsReadCapacity: '20'
+      DevicePermissionsWriteCapacity: '5'
+      DownloaderAuthenticationReadCapacity: '40'
+      DownloaderAuthenticationWriteCapacity: '20'
+      DownloaderChannelsReadCapacity: '80'
+      DownloaderChannelsWriteCapacity: '40'
+      DownloaderJobsReadCapacity: '40'
+      DownloaderJobsWriteCapacity: '80'
+      FeedGroupsReadCapacity: '10'
+      FeedGroupsWriteCapacity: '10'
+      HomescreenCollectionsReadCapacity: '50'
+      HomescreenCollectionsWriteCapacity: '10'
+      HomescreenPagesReadCapacity: '50'
+      HomescreenPagesWriteCapacity: '10'
+      AdPoliciesReadCapacity: '50'
+      AdPoliciesWriteCapacity: '10'
+      TokenKeysV2ReadCapacity: '5'
+      TokenKeysV2WriteCapacity: '5'
+      bookmarkerReadCapacity: '1000'
+      bookmarkerWriteCapacity: '600'
+      bookmarkerMaxReadCapacity: '2000'
+      bookmarkerMaxWriteCapacity: '2000'
+      bookmarkerProfileUpdateReadCapacity: '1000'
+      bookmarkerProfileUpdateWriteCapacity: '600'
+      bookmarkershards: 4
+      cmsEtlJobsKinesisStreamShards: 12
+      SearchConfigurationReadCapacity: '500'
+      SearchConfigurationWriteCapacity: '40'
+      homescreenRedisShards: 3
+      homescreenRedisv3InstanceType: cache.r4.large
+      bookmarkerRedisShards: 3
+      bookmarkerRedisInstanceType: cache.r4.large
+      BookmarkerRedisSnapshotArn: 'arn:aws:s3:::sr-bookmarker-backup-886239521314/redis/bookmarker-2018-02-22-0001.rdb'
+
+Resources:
+
+  BookmarkerBookmarksTableGlobal:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: profileId
+        AttributeType: S
+      - AttributeName: rangeKey
+        AttributeType: S
+      KeySchema:
+      - AttributeName: profileId
+        KeyType: HASH
+      - AttributeName: rangeKey
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerWriteCapacity]
+      TableName: BookmarkerBookmarksGlobal
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: bookmarks
+
+  DynamoDBScalingRole:
+    Type: "AWS::IAM::Role"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - application-autoscaling.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:UpdateTable"
+                  - "cloudwatch:PutMetricAlarm"
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:GetMetricStatistics"
+                  - "cloudwatch:SetAlarmState"
+                  - "cloudwatch:DeleteAlarms"
+                Resource: "*"
+
+  BookmarkerBookmarksWriteCapacityScalableTarget:
+    Condition: DeployEastRegionOnly
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Properties:
+      MaxCapacity: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerMaxWriteCapacity]
+      MinCapacity: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerWriteCapacity]
+      ResourceId: !Join
+        - /
+        - - table
+          - !Ref BookmarkerBookmarksTableGlobal
+      RoleARN: !GetAtt DynamoDBScalingRole.Arn
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      ServiceNamespace: dynamodb
+
+  BookmarkerBookmarksWriteScalingPolicy:
+    Condition: DeployEastRegionOnly
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Properties:
+      PolicyName: WriteAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref BookmarkerBookmarksWriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 50.0
+        ScaleInCooldown: 120
+        ScaleOutCooldown: 300
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+
+  BookmarkerBookmarksReadCapacityScalableTarget:
+    Condition: DeployEastRegionOnly
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Properties:
+      MaxCapacity: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerMaxReadCapacity]
+      MinCapacity: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerReadCapacity]
+      ResourceId: !Join
+        - /
+        - - table
+          - !Ref BookmarkerBookmarksTableGlobal
+      RoleARN: !GetAtt DynamoDBScalingRole.Arn
+      ScalableDimension: dynamodb:table:ReadCapacityUnits
+      ServiceNamespace: dynamodb
+
+  BookmarkerBookmarksReadScalingPolicy:
+    Condition: DeployEastRegionOnly
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Properties:
+      PolicyName: ReadAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref BookmarkerBookmarksReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 30.0
+        ScaleInCooldown: 120
+        ScaleOutCooldown: 300
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
+
+  BookmarkerProfileUpdateTableGlobal:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: profileId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: profileId
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerProfileUpdateReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerProfileUpdateWriteCapacity]
+      TableName: BookmarkerProfileUpdateGlobal
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: bookmarks
+
+
+  BookmarkerRedisClusterV2:
+    Type: "AWS::ElastiCache::ReplicationGroup"
+    Condition: DeployMultiRegion
+    Properties:
+      AutomaticFailoverEnabled: true
+      AutoMinorVersionUpgrade: true
+      CacheNodeType: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkerRedisInstanceType]
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      Engine: redis
+      #since auto minor version upgrade is true, this has to be commented out after deploy
+      # this allows updates to be performed in the cluster, otherwise elasticcache prevents anything to be changed, even tags
+      # EngineVersion: 3.2.10
+      ReplicationGroupDescription: Bookmarker Redis Cluster v2
+      ReplicationGroupId: bookmarker-redis
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${NetworkStackName}-InstanceSecurityGroup
+      SnapshotRetentionLimit: 4
+      SnapshotWindow: 08:30-10:30
+      NumNodeGroups: 3
+      NodeGroupConfiguration:
+        - Slots: 0-5461
+          ReplicaCount: 1
+        - Slots: 5462-10922
+          ReplicaCount: 1
+        - Slots: 10923-16383
+          ReplicaCount: 1
+      SnapshotArns:
+        - !If [UseBookmarkerRedisSnapshot, !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], BookmarkerRedisSnapshotArn], !Ref "AWS::NoValue"]
+      Tags:
+        - Key: Name
+          Value: BookmarkerRedisClusterV2
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: bookmarks
+
+  BookmarkerBackupBucket:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [sr-bookmarker-backup, !Ref "AWS::AccountId"]]
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: bookmarks
+
+  BookmarkerBackupBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: BucketRegion
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - s3:List*
+          - s3:Get*
+          - s3:Put*
+          Principal:
+            AWS:
+            - arn:aws:iam::181133766305:root
+            - arn:aws:iam::638782101961:root
+            - arn:aws:iam::886239521314:root
+          Resource:
+          - !Join ['', ['arn:aws:s3:::', !Ref BookmarkerBackupBucket, '']]
+          - !Join ['', ['arn:aws:s3:::', !Ref BookmarkerBackupBucket, /*]]
+          Effect: Allow
+      Bucket:
+        !Ref BookmarkerBackupBucket
+
+  HomescreenRedisClusterV3:
+    Type: "AWS::ElastiCache::ReplicationGroup"
+    Condition: DeployMultiRegion
+    Properties:
+      AutomaticFailoverEnabled: true
+      AutoMinorVersionUpgrade: true
+      CacheNodeType: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], homescreenRedisv3InstanceType]
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      Engine: redis
+      #since auto minor version upgrade is true, this has to be commented out after deploy
+      # this allows updates to be performed in the cluster, otherwise elasticcache prevents anything to be changed, even tags
+      #EngineVersion: 3.2.10
+      NumNodeGroups: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], homescreenRedisShards]
+      ReplicasPerNodeGroup: 1
+      ReplicationGroupDescription: Homescreen Redis Cluster
+      ReplicationGroupId: homescreen-redis-v3
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${NetworkStackName}-InstanceSecurityGroup
+      SnapshotRetentionLimit: 4
+      SnapshotWindow: 03:30-05:30
+      Tags:
+        - Key: Name
+          Value: HomescreenRedisV3Cluster
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: homescreen
+
+  BookmarkerStream:
+    Type: "AWS::Kinesis::Stream"
+    Condition: DeployEastRegionOnly
+    Properties:
+      ShardCount: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], bookmarkershards]
+      Tags:
+      - Key: Name
+        Value: BookmarkerStream
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: bookmarks
+
+  CmsGuidsTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployMultiRegion
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: guid
+        AttributeType: S
+      - AttributeName: id
+        AttributeType: S
+      GlobalSecondaryIndexes:
+      - IndexName: guid-index
+        KeySchema:
+        - AttributeName: guid
+          KeyType: HASH
+        Projection:
+          ProjectionType: KEYS_ONLY
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsGuidsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsGuidsWriteCapacity]
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsGuidsReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsGuidsWriteCapacity]
+      TableName: CmsGuids
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: legacy-content-svcs
+
+
+  CmsEtlJobStream:
+    Type: "AWS::Kinesis::Stream"
+    Condition: DeployEastRegionOnly
+    Properties:
+      ShardCount: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], cmsEtlJobsKinesisStreamShards]
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+      - Key: Name
+        Value: CmsEtlJobStream
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: legacy-content-svcs
+
+  TitanChannelIndexesTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: recordType
+        AttributeType: S
+      KeySchema:
+      - AttributeName: recordType
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], TitanChannelIndexesTableReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], TitanChannelIndexesTableWriteCapacity]
+      TableName: TitanChannelIndexes
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CmsChannelCategoriesTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployMultiRegion
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: pageIndex
+        AttributeType: N
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: pageIndex
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsChannelCategoriesReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsChannelCategoriesWriteCapacity]
+      TableName: CmsChannelCategories
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CmsChannelDataSetTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployMultiRegion
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: dataType
+        AttributeType: S
+      - AttributeName: feedId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: feedId
+        KeyType: HASH
+      - AttributeName: dataType
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsChannelDataSetReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsChannelDataSetWriteCapacity]
+      TableName: CmsChannelDataSet
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  SearchConfigurationsTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      TableName: SearchConfigurations
+      AttributeDefinitions:
+      - AttributeName: feedId
+        AttributeType: S
+      - AttributeName: channelId
+        AttributeType: S
+      - AttributeName: providerId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: feedId
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchConfigurationReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchConfigurationWriteCapacity]
+      GlobalSecondaryIndexes:
+      - IndexName: channelId-index
+        KeySchema:
+        - AttributeName: channelId
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchConfigurationReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchConfigurationWriteCapacity]
+      - IndexName: providerId-index
+        KeySchema:
+        - AttributeName: providerId
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchConfigurationReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchConfigurationWriteCapacity]
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: cap
+
+  CmsDbFilesS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [roku-cf-cms, !Ref "AWS::AccountId", db]]
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: !Ref CmsDbFilesS3BucketExpirationInDays
+          Id: CmsDbFileExpiration
+          NoncurrentVersionExpirationInDays: !Ref CmsDbFilesS3BucketNoncurrentExpiration
+          Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+
+  CmsDbFilesS3Bucket2:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [roku-cf-cms, !Ref "AWS::AccountId", db2]]
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: !Ref CmsDbFilesS3BucketExpirationInDays
+          Id: CmsDbFileExpiration
+          NoncurrentVersionExpirationInDays: !Ref CmsDbFilesS3BucketNoncurrentExpiration
+          Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  PopularityFetcherS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [sr, !Ref "AWS::AccountId", popularity-logs]]
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: !Ref PopularityFetcherBucketExpirationInDays
+          Id: PopularityFetcherExpiration
+          Status: Enabled
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: tracking
+
+  AthenaQueryS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [sr, !Ref "AWS::AccountId", athena-query-results]]
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: !Ref AthenaQueryBucketExpirationInDays
+          Id: AthenaQueryExpiration
+          Status: Enabled
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: tracking
+
+  PopularityResultsS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [sr, !Ref "AWS::AccountId", deduper-popularity]]
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: !Ref PopularityResultsBucketExpirationInDays
+          Id: PopularityResultsExpiration
+          Status: Enabled
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: tracking
+
+  # Note that S3PolicySearchChannelfeedsS3Bucket is in search3.cf.yaml, not here
+
+  DeduperSearchIndexS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Condition: WBMEnvironment
+    DeletionPolicy: Retain
+    Properties:
+          AccessControl: BucketOwnerFullControl
+          BucketName: !Join ['-', [roku-deduper-search-index, !Ref "AWS::AccountId"]]
+          VersioningConfiguration:
+            Status: Suspended
+
+  CmsDoneFilesS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [roku-cf-cms, !Ref "AWS::AccountId", done]]
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: !Ref CmsDoneFilesS3BucketExpirationInDays
+          Id: DoneFileExpiration
+          NoncurrentVersionExpirationInDays: !Ref CmsDoneFilesS3BucketNoncurrentExpiration
+          Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CmsDoneFilesS3Bucket2:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [roku-cf-cms, !Ref "AWS::AccountId", done2]]
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: !Ref CmsDoneFilesS3BucketExpirationInDays
+          Id: DoneFileExpiration
+          NoncurrentVersionExpirationInDays: !Ref CmsDoneFilesS3BucketNoncurrentExpiration
+          Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CmsEpisodesTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployMultiRegion
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: snen
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: snen
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsEpisodesReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsEpisodesWriteCapacity]
+      TableName: CmsEpisodes
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CmsEtlJobsHistoryTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployMultiRegion
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: feedId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: feedId
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsEtlJobsHistoryReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsEtlJobsHistoryWriteCapacity]
+      TableName: CmsEtlJobsHistory
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CmsEtlJobsTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployMultiRegion
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: feedId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: feedId
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsEtlJobsReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsEtlJobsWriteCapacity]
+      TableName: CmsEtlJobs
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CmsLoaderDoneFileTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployMultiRegion
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: key
+        AttributeType: S
+      KeySchema:
+      - AttributeName: key
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsLoaderDoneFileReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsLoaderDoneFileWriteCapacity]
+      TableName: CmsLoaderDoneFile
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CmsTopLevelProgramsTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployMultiRegion
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsTopLevelProgramsReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], CmsTopLevelProgramsWriteCapacity]
+      TableName: CmsTopLevelPrograms
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  CommonElasticsearchCluster:
+    Type: "AWS::Elasticsearch::Domain"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AccessPolicies:
+        Statement:
+        - Action:
+          - es:ESHttpGet
+          - es:ESHttpHead
+          - es:ESHttpPost
+          - es:ESHttpPut
+          - es:Describe*
+          - es:List*
+          Condition:
+            IpAddress:
+              "aws:SourceIp": !Ref ElasticsearchWhitelistedIPs
+          Effect: Allow
+          Principal:
+            AWS: '*'
+          Resource: '*'
+          Sid: ''
+        Version: '2012-10-17'
+      AdvancedOptions:
+        indices.fielddata.cache.size: 50
+      DomainName: sr-common-es
+      EBSOptions:
+        EBSEnabled: !Ref ElasticsearchEBSOptionsEBSEnabled
+        VolumeSize: !Ref ElasticsearchEBSOptionsVolumeSize
+        VolumeType: !Ref ElasticsearchEBSOptionsVolumeType
+      ElasticsearchClusterConfig:
+        DedicatedMasterCount: !If [CreateElasticsearchMasterNodes, !Ref ElasticsearchClusterConfigDedicatedMasterCount, !Ref "AWS::NoValue"]
+        DedicatedMasterEnabled: !If [CreateElasticsearchMasterNodes, !Ref ElasticsearchClusterConfigDedicatedMasterEnabled, !Ref "AWS::NoValue"]
+        DedicatedMasterType: !If [CreateElasticsearchMasterNodes, !Ref ElasticsearchClusterConfigDedicatedMasterType, !Ref "AWS::NoValue"]
+        InstanceCount: !Ref ElasticsearchClusterConfigInstanceCount
+        InstanceType: !Ref ElasticsearchClusterConfigInstanceType
+        ZoneAwarenessEnabled: !Ref ElasticsearchClusterConfigZoneAwarenessEnabled
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: 10
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: legacy-content-svcs
+
+  SearchElasticsearchCluster:
+    Type: "AWS::Elasticsearch::Domain"
+    Condition: DeploySRSearchES
+    Properties:
+      AccessPolicies:
+        Statement:
+        - Action:
+          - es:ESHttpDelete
+          - es:ESHttpGet
+          - es:ESHttpHead
+          - es:ESHttpPost
+          - es:ESHttpPut
+          - es:Describe*
+          - es:List*
+          Condition:
+            IpAddress:
+              "aws:SourceIp": !Ref ElasticsearchWhitelistedIPs
+          Effect: Allow
+          Principal:
+            AWS: '*'
+          Resource: '*'
+          Sid: ''
+        Version: '2012-10-17'
+      AdvancedOptions:
+        indices.fielddata.cache.size: 50
+      DomainName: sr-search-es
+      ElasticsearchVersion: !If [ESVersionUSWest2Only, !Ref SearchElasticsearchVersion, !Ref "AWS::NoValue"]
+      EBSOptions:
+        EBSEnabled: !Ref SearchElasticsearchEBSOptionsEBSEnabled
+        VolumeSize: !Ref SearchElasticsearchEBSOptionsVolumeSize
+        VolumeType: !Ref SearchElasticsearchEBSOptionsVolumeType
+      ElasticsearchClusterConfig:
+        DedicatedMasterCount: !If [SearchCreateElasticsearchMasterNodes, !Ref SearchElasticsearchClusterConfigDedicatedMasterCount, !Ref "AWS::NoValue"]
+        DedicatedMasterEnabled: !If [SearchCreateElasticsearchMasterNodes, !Ref SearchElasticsearchClusterConfigDedicatedMasterEnabled, !Ref "AWS::NoValue"]
+        DedicatedMasterType: !If [SearchCreateElasticsearchMasterNodes, !Ref SearchElasticsearchClusterConfigDedicatedMasterType, !Ref "AWS::NoValue"]
+        InstanceCount: !Ref SearchElasticsearchClusterConfigInstanceCount
+        InstanceType: !Ref SearchElasticsearchClusterConfigInstanceType
+        ZoneAwarenessEnabled: !Ref SearchElasticsearchClusterConfigZoneAwarenessEnabled
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: 10
+
+  DownloaderAuthenticationTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: CreateCMSDynamoDBTables
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: channelId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: channelId
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderAuthenticationReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderAuthenticationWriteCapacity]
+      TableName: DownloaderAuthentication
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: cap
+
+  DownloaderChannelsTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: CreateCMSDynamoDBTables
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: channel
+        AttributeType: S
+      - AttributeName: channelId
+        AttributeType: S
+      - AttributeName: enabled
+        AttributeType: N
+      - AttributeName: internalFeed
+        AttributeType: N
+      - AttributeName: feedType
+        AttributeType: S
+      - AttributeName: groupName
+        AttributeType: S
+      GlobalSecondaryIndexes:
+      - IndexName: channel-enabled-index
+        KeySchema:
+        - AttributeName: channel
+          KeyType: HASH
+        - AttributeName: enabled
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsWriteCapacity]
+      - IndexName: enabled-index
+        KeySchema:
+        - AttributeName: enabled
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsWriteCapacity]
+      - IndexName: internalFeed-enabled-index
+        KeySchema:
+        - AttributeName: internalFeed
+          KeyType: HASH
+        - AttributeName: enabled
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsWriteCapacity]
+      - IndexName: feedType-enabled-index
+        KeySchema:
+        - AttributeName: feedType
+          KeyType: HASH
+        - AttributeName: enabled
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsWriteCapacity]
+      - IndexName: groupName-enabled-index
+        KeySchema:
+        - AttributeName: groupName
+          KeyType: HASH
+        - AttributeName: enabled
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsWriteCapacity]
+      KeySchema:
+      - AttributeName: channelId
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderChannelsWriteCapacity]
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TableName: DownloaderChannels
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: cap
+
+  DownloaderJobsTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: CreateCMSDynamoDBTables
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: channel
+        AttributeType: S
+      - AttributeName: channelId
+        AttributeType: S
+      - AttributeName: jobCounter
+        AttributeType: N
+      - AttributeName: startTime
+        AttributeType: N
+      GlobalSecondaryIndexes:
+      - IndexName: channelId-startTime-index
+        KeySchema:
+        - AttributeName: channelId
+          KeyType: HASH
+        - AttributeName: startTime
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderJobsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderJobsWriteCapacity]
+      - IndexName: channel-jobCounter-index
+        KeySchema:
+        - AttributeName: channel
+          KeyType: HASH
+        - AttributeName: jobCounter
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderJobsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderJobsWriteCapacity]
+      KeySchema:
+      - AttributeName: channelId
+        KeyType: HASH
+      - AttributeName: jobCounter
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderJobsReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], DownloaderJobsWriteCapacity]
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TableName: DownloaderJobs
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: cap
+
+  DownloaderS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Condition: BucketRegion
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketName: !Join ['-', [roku-downloader, !Ref "AWS::AccountId"]]
+      VersioningConfiguration:
+        Status: Suspended
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: cap
+
+  DownloaderS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: BucketRegion
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - s3:List*
+          - s3:Get*
+          Principal:
+            AWS:
+            - arn:aws:iam::181133766305:root
+            - arn:aws:iam::638782101961:root
+            - arn:aws:iam::886239521314:root
+          Resource:
+          - !Join ['', ['arn:aws:s3:::', !Ref DownloaderS3Bucket, '']]
+          - !Join ['', ['arn:aws:s3:::', !Ref DownloaderS3Bucket, /*]]
+          Effect: Allow
+      Bucket:
+        !Ref DownloaderS3Bucket
+
+  FeedGroupsTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: feedGroup
+        AttributeType: S
+      - AttributeName: feedId
+        AttributeType: S
+      GlobalSecondaryIndexes:
+      - IndexName: feedId
+        KeySchema:
+        - AttributeName: feedId
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], FeedGroupsReadCapacity]
+          WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], FeedGroupsWriteCapacity]
+      KeySchema:
+      - AttributeName: feedGroup
+        KeyType: HASH
+      - AttributeName: feedId
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], FeedGroupsReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], FeedGroupsWriteCapacity]
+      TableName: FeedGroups
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: cap
+
+  FeedGroupJobCounterTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: feedGroup
+        AttributeType: S
+      KeySchema:
+      - AttributeName: feedGroup
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], FeedGroupsReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], FeedGroupsWriteCapacity]
+      TableName: FeedGroupJobCounter
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: cap
+
+  #NOTE: ToDo move Homescreen DynamoDB tables into own CF template/stack to support multi-region
+  HomescreenCollectionsTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], HomescreenCollectionsReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], HomescreenCollectionsWriteCapacity]
+      StreamSpecification: !If [ EnableHomescreenStream, "StreamViewType": "NEW_AND_OLD_IMAGES", !Ref "AWS::NoValue"]
+      TableName: HomescreenCollections
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: homescreen
+
+  #NOTE: ToDo move Homescreen DynamoDB tables into own CF template/stack to support multi-region
+  HomescreenPagesTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], HomescreenPagesReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], HomescreenPagesWriteCapacity]
+      StreamSpecification: !If [ EnableHomescreenStream, "StreamViewType": "NEW_AND_OLD_IMAGES", !Ref "AWS::NoValue"]
+      TableName: HomescreenPages
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: homescreen
+
+  AdPoliciesTable:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], AdPoliciesReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], AdPoliciesWriteCapacity]
+      TableName: AdPolicies
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: homescreen
+
+
+  RedisSubnetGroup:
+    Type: "AWS::ElastiCache::SubnetGroup"
+    Condition: DeployMultiRegion
+    Properties:
+      Description: Redis Subnet Group
+      SubnetIds:
+      - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetA
+      - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetB
+      - Fn::ImportValue: !Sub ${NetworkStackName}-SubnetC
+
+  S3PolicyCmsDbFilesS3Bucket:
+    Type: "AWS::S3::BucketPolicy"
+    Condition: BucketRegion
+    Properties:
+      Bucket: !Ref CmsDbFilesS3Bucket
+      PolicyDocument:
+        Statement:
+        - Action:
+          - s3:Get*
+          - s3:List*
+          Effect: Allow
+          Principal:
+            AWS:
+            - !Ref DataTeamARN
+          Resource:
+          - !Join ['', ['arn:aws:s3:::', !Ref CmsDbFilesS3Bucket, /*]]
+          - !Join ['', ['arn:aws:s3:::', !Ref CmsDbFilesS3Bucket, '']]
+          Sid: S3PolicyCmsDbFilesS3Bucket20160620
+        Version: '2012-10-17'
+
+  S3PolicyCmsDoneFilesS3Bucket:
+    Type: "AWS::S3::BucketPolicy"
+    Condition: BucketRegion
+    Properties:
+      Bucket: !Ref CmsDoneFilesS3Bucket
+      PolicyDocument:
+        Statement:
+        - Action:
+          - s3:Get*
+          - s3:List*
+          Effect: Allow
+          Principal:
+            AWS:
+            - !Ref DataTeamARN
+          Resource:
+          - !Join ['', ['arn:aws:s3:::', !Ref CmsDoneFilesS3Bucket, /*]]
+          - !Join ['', ['arn:aws:s3:::', !Ref CmsDoneFilesS3Bucket, '']]
+          Sid: S3PolicyCmsDoneFilesS3Bucket20160620
+        Version: '2012-10-17'
+
+  TokenKeysV2Table:
+    Type: "AWS::DynamoDB::Table"
+    Condition: DeployEastRegionOnly
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: createTime
+        AttributeType: N
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: createTime
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], TokenKeysV2ReadCapacity]
+        WriteCapacityUnits: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], TokenKeysV2WriteCapacity]
+      TableName: TokenKeysV2
+      Tags:
+        - Key: Department
+          Value: SR
+        - Key: Spend_Category
+          Value: homescreen
+
+
+Outputs:
+ 
+  DownloaderChannelsTable:
+    Description: DownloaderChannels table
+    Condition: DeployEastRegionOnly
+    Value: DownloaderChannels
+    Export:
+      Name: !Sub ${AWS::StackName}-DownloaderChannelsTable
+  BookmarkerStream:
+    Description: Kinesis stream for bookmarks
+    Condition: DeployEastRegionOnly
+    Value: !Ref BookmarkerStream
+    Export:
+      Name: !Sub ${AWS::StackName}-BookmarkerStream
+  CmsEtlJobStream:
+    Description: Kinesis stream for bookmarks
+    Condition: DeployEastRegionOnly
+    Value: !Ref CmsEtlJobStream
+    Export:
+      Name:  !Sub ${AWS::StackName}-CmsEtlJobStream
+  CmsDbFilesS3Bucket:
+    Description: CMS ETL S3 db file bucket
+    Condition: DeployEastRegionOnly
+    #This has to be this way so that it can work in regions outside of us-east-1
+    Value: !Join ['-', [roku-cf-cms, !Ref "AWS::AccountId", db]]
+    Export:
+      Name:  !Sub ${AWS::StackName}-CmsDbFilesS3Bucket
+  CmsDbFilesS3Bucket2:
+    Description: CMS ETL S3 db file bucket
+    Condition: DeployEastRegionOnly
+    #This has to be this way so that it can work in regions outside of us-east-1
+    Value: !Join ['-', [roku-cf-cms, !Ref "AWS::AccountId", db2]]
+    Export:
+      Name:  !Sub ${AWS::StackName}-CmsDbFilesS3Bucket2
+  CmsDoneFilesS3Bucket:
+    Description: CMS ETL S3 done file bucket
+    Condition: DeployEastRegionOnly
+    #This has to be this way so that it can work in regions outside of us-east-1
+    Value: !Join ['-', [roku-cf-cms, !Ref "AWS::AccountId", done]]
+    Export:
+      Name:  !Sub ${AWS::StackName}-CmsDoneFilesS3Bucket
+  CmsDoneFilesS3Bucket2:
+    Description: CMS ETL S3 done file bucket
+    Condition: DeployEastRegionOnly
+    #This has to be this way so that it can work in regions outside of us-east-1
+    Value: !Join ['-', [roku-cf-cms, !Ref "AWS::AccountId", done2]]
+    Export:
+      Name:  !Sub ${AWS::StackName}-CmsDoneFilesS3Bucket2
+  ImageFetcherS3Bucket:
+    Description: Image fetcher S3 file bucket
+    Condition: DeployEastRegionOnly
+    #This has to be this way so that it can work in regions outside of us-east-1
+    Value: !Join ['-', [roku-image-fetcher, !Ref "AWS::AccountId"]]
+    Export:
+      Name:  !Sub ${AWS::StackName}-ImageFetcherS3Bucket
+  DownloaderS3Bucket:
+    Description: Downloader S3 file bucket
+    Condition: DeployEastRegionOnly
+    #This has to be this way so that it can work in regions outside of us-east-1
+    Value: !Join ['-', [roku-downloader, !Ref "AWS::AccountId"]]
+    Export:
+      Name:  !Sub ${AWS::StackName}-DownloaderS3Bucket
+  esEndpoint:
+    Description: Elasticsearch data endpoint
+    Condition: DeployEastRegionOnly
+    Value: !Join ['', ["http://", !GetAtt CommonElasticsearchCluster.DomainEndpoint]]
+    Export:
+      Name: !Sub ${AWS::StackName}-CommonEsEndpoint
+  PopularityFetcherS3Bucket:
+    Description: Bucket that contains actions extracted from Akamai logs
+    Condition: DeployEastRegionOnly
+    Value: !Join ['-', [sr, !Ref "AWS::AccountId", popularity-logs]]
+    Export:
+      Name: !Sub ${AWS::StackName}-PopularityFetcherS3Bucket
+  AthenaQueryS3Bucket:
+    Description: Bucket used to store results from Athena queries
+    Condition: DeployEastRegionOnly
+    Value: !Join ['-', [sr, !Ref "AWS::AccountId", athena-query-results]]
+    Export:
+      Name: !Sub ${AWS::StackName}-AthenaQueryS3Bucket
+  PopularityResultsS3Bucket:
+    Description: Contains files with popularity scores calculated by PopularityCalculator
+    Condition: DeployEastRegionOnly
+    Value: !Join ['-', [sr, !Ref "AWS::AccountId", deduper-popularity]]
+    Export:
+      Name: !Sub ${AWS::StackName}-PopularityResultsS3Bucket
+
+  SearchEsEndpoint:
+    Description: Search Elasticsearch Endpoint
+    Condition: DeploySRSearchES
+    Value: !Join ['', ["http://", !GetAtt SearchElasticsearchCluster.DomainEndpoint]]
+    Export:
+      Name: !Sub ${AWS::StackName}-SearchEsEndpoint
+  SearchChannelfeedsS3Bucket:
+    #search was moved from ehre but the pointers never changed. Adding this hack so I can get unblocked
+    Value: !Join ['', ["roku-search-channelfeeds-", !Ref "AWS::AccountId"] ]
+    Export:
+      Name: !Sub ${AWS::StackName}-SearchChannelfeedsS3Bucket
+  SearchChannelfeeds2S3Bucket:
+    Description: Downloader S3 file bucket
+    Condition: DeployEastRegionOnly
+    #This has to be this way so that it can work in regions outside of us-east-1
+    Value: !Join ['-', [roku-search-channelfeeds2, !Ref "AWS::AccountId"]]
+    Export:
+      Name: !Sub ${AWS::StackName}-SearchChannelfeeds2S3Bucket
+  DeduperSearchIndexS3Bucket:
+    Description: Downloader S3 file bucket
+    Condition: DeployEastRegionOnly
+    #This has to be this way so that it can work in regions outside of us-east-1
+    Value: !Join ['-', [roku-deduper-search-index, !Ref "AWS::AccountId"]]
+    Export:
+      Name: !Sub ${AWS::StackName}-DeduperSearchIndexS3Bucket

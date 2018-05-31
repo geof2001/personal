@@ -1,0 +1,66 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo COMMANDS phase...
+      - echo Build started on `date`
+      - apt-get update -y
+      - echo Adding latest available version of pip.
+      - pip install --upgrade pip
+      - echo Installing AWS CLI
+      - pip install awscli --upgrade
+      - echo Adding code dependencies for project
+      - pip install requests_aws_sign -t ./slack_bud/slack_bud
+      - pip install elasticsearch -t ./slack_bud/slack_bud
+      - pip install requests -t ./slack_bud/slack_bud
+      - pip install python-gitlab -t ./slack_bud/slack_bud
+      - pip install requests[security] -t ./slack_bud/slack_bud
+      - pip install pendulum -t ./slack_bud/slack_bud
+      - pip install objdict -t ./slack_bud/slack_bud
+      
+  pre_build:
+    commands:
+      - echo PRE_BUILD phase... verifying state
+      - echo `which python`
+      - echo `python --version`
+      - echo `aws --version`
+  build:
+    commands:
+      - echo BUILD phase...
+      - echo Create build_info file.
+      - cd ./slack_bud
+      - echo `pwd`
+      - echo `ls`
+      - echo Get githook_info.txt file from S3
+      - aws s3 cp s3://sr-infra-pipeline-source/githook_info.txt githook_info.txt
+      - echo Building
+      - cp *.py ./slack_bud
+      - cp *.txt ./slack_bud
+      - mkdir ./slack_bud/util
+      - cp ./util/*.py ./slack_bud/util
+      - mkdir ./slack_bud/cmds
+      - cp ./cmds/*.py ./slack_bud/cmds
+      - mkdir ./slack_bud/test
+      - cp ./test/*.py ./slack_bud/test
+      - cd ./slack_bud
+      - echo `pwd`
+      - echo `ls`
+      - echo `python pipeline.py`
+      - cp build_info.txt ./cmds
+      - aws s3 cp build_info.txt s3://sr-infra-pipeline-source
+  post_build:
+    commands:
+      - echo POST_BUILD phase...
+      - echo Run unit tests
+      - echo `pwd`
+      - cd ./test
+      - echo `ls`
+      - echo `python unit_tests.py 2> unit-test.txt`
+      - aws s3 cp unit-test.txt s3://sr-infra-pipeline-source
+      - cp unit-test.txt ../unit-test.txt
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: slack_bud/slack_bud

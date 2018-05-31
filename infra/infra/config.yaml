@@ -1,0 +1,10 @@
+microservices:
+  iam-layer:
+  multiregion-notifications:
+  roku-network:
+  sr-blue-batch:
+  sr-data:
+  sr-es:
+  sr-global-services:
+  us-east-1-only:
+  sr-blue:

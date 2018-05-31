@@ -1,0 +1,38 @@
+[
+  {
+    "ParameterKey": "DevnullImage",
+    "ParameterValue": "{{services['devnull'][accounts[profile]]}}"
+  },
+  {
+    "ParameterKey": "SSLKey",
+    "ParameterValue": "{{sslconfigs['sslkey'][accounts[profile]]}}"
+  },
+  {
+    "ParameterKey": "MinServiceClusterSize",
+    "ParameterValue": "{{clusters[accounts[profile]][region]['MinServiceClusterSize']}}"
+  },
+  {
+    "ParameterKey": "MaxServiceClusterSize",
+    "ParameterValue": "{{clusters[accounts[profile]][region]['MaxServiceClusterSize']}}"
+  },
+  {
+    "ParameterKey": "MinServiceClusterSize",
+    "ParameterValue": "{{clusters[accounts[profile]][region]['MinServiceClusterSize']}}"
+  },
+  {
+    "ParameterKey": "ServiceClusterScaleUpThreshold",
+    "ParameterValue": "{{clusters[accounts[profile]][region]['ServiceClusterScaleUpThreshold']}}"
+  },
+  {
+    "ParameterKey": "ServiceClusterScaleDownThreshold",
+    "ParameterValue": "{{clusters[accounts[profile]][region]['ServiceClusterScaleDownThreshold']}}"
+  },
+  {
+    "ParameterKey": "ServiceClusterRollSize",
+    "ParameterValue": "{{clusters[accounts[profile]][region]['ServiceClusterRollSize']}}"
+  },
+  {
+    "ParameterKey": "HAProxyMinSize",
+    "ParameterValue": "{{clusters[accounts[profile]][region]['HAProxyMinSize']}}"
+  }
+]

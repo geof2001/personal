@@ -1,0 +1,4 @@
+cfgmap:
+  token: ''
+  tokenstack: 'jwt-edge-token'
+  UPV: true

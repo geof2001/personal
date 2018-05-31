@@ -1,0 +1,30 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo COMMANDS phase...
+      - echo Pylint test started on `date`
+      - apt-get update -y
+      - echo Installing AWS CLI
+      - pip install awscli --upgrade
+      - echo Installing PYLINT
+      - pip install pylint
+  pre_build:
+    commands:
+      - echo PRE_BUILD phase... verifying configuration and versions
+      - echo `which python`
+      - echo `python --version`
+      - echo `pylint --version`
+      - echo `aws --version`
+  build:
+    commands:
+      - echo BUILD phase...
+      - echo Run Pylint checkers to score modules
+      - cd ./slack-bud
+      - echo `pylint *.py > pylint_output.txt`
+      - echo `ls`
+      - aws s3 cp pylint_output.txt s3://sr-infra-pipeline-source
+  post_build:
+    commands:
+      - echo POST_BUILD phase...

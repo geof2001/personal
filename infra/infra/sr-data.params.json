@@ -1,0 +1,122 @@
+[
+  {
+    "ParameterKey": "ElasticsearchClusterConfigDedicatedMasterCount",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchClusterConfigDedicatedMasterCount']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchClusterConfigDedicatedMasterEnabled",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchClusterConfigDedicatedMasterEnabled']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchClusterConfigDedicatedMasterType",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchClusterConfigDedicatedMasterType']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchClusterConfigInstanceCount",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchClusterConfigInstanceCount']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchClusterConfigInstanceType",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchClusterConfigInstanceType']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchClusterConfigZoneAwarenessEnabled",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchClusterConfigZoneAwarenessEnabled']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchEBSOptionsEBSEnabled",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchEBSOptionsEBSEnabled']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchEBSOptionsIops",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchEBSOptionsIops']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchEBSOptionsVolumeSize",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchEBSOptionsVolumeSize']}}"
+  },
+  {
+    "ParameterKey": "ElasticsearchEBSOptionsVolumeType",
+    "ParameterValue": "{{dataconfig['es'][accounts[profile]][region]['ElasticsearchEBSOptionsVolumeType']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchVersion",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchVersion']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchClusterConfigDedicatedMasterCount",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchClusterConfigDedicatedMasterCount']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchClusterConfigDedicatedMasterEnabled",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchClusterConfigDedicatedMasterEnabled']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchClusterConfigDedicatedMasterType",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchClusterConfigDedicatedMasterType']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchClusterConfigInstanceCount",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchClusterConfigInstanceCount']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchClusterConfigInstanceType",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchClusterConfigInstanceType']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchClusterConfigZoneAwarenessEnabled",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchClusterConfigZoneAwarenessEnabled']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchEBSOptionsEBSEnabled",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchEBSOptionsEBSEnabled']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchEBSOptionsIops",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchEBSOptionsIops']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchEBSOptionsVolumeSize",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchEBSOptionsVolumeSize']}}"
+  },
+  {
+    "ParameterKey": "SearchElasticsearchEBSOptionsVolumeType",
+    "ParameterValue": "{{dataconfig['searchES'][accounts[profile]][region]['ElasticsearchEBSOptionsVolumeType']}}"
+  },
+  {
+    "ParameterKey": "CmsDoneFilesS3BucketExpirationInDays",
+    "ParameterValue": "{{dataconfig['s3CmsETlDoneBucket'][accounts[profile]][region]['CmsDoneFilesS3BucketExpirationInDays']}}"
+  },
+  {
+    "ParameterKey": "CmsDoneFilesS3BucketNoncurrentExpiration",
+    "ParameterValue": "{{dataconfig['s3CmsETlDoneBucket'][accounts[profile]][region]['CmsDoneFilesS3BucketNoncurrentExpiration']}}"
+  },
+  {
+    "ParameterKey": "CmsDbFilesS3BucketExpirationInDays",
+    "ParameterValue": "{{dataconfig['s3CmsETlDbBucket'][accounts[profile]][region]['CmsDbFilesS3BucketExpirationInDays']}}"
+  },
+  {
+    "ParameterKey": "CmsDbFilesS3BucketNoncurrentExpiration",
+    "ParameterValue": "{{dataconfig['s3CmsETlDbBucket'][accounts[profile]][region]['CmsDbFilesS3BucketNoncurrentExpiration']}}"
+  },
+  {
+    "ParameterKey": "PopularityFetcherBucketExpirationInDays",
+    "ParameterValue": "{{dataconfig['s3PopularityFetcherBucket'][accounts[profile]][region]['PopularityFetcherBucketExpirationInDays']}}"
+  },
+  {
+    "ParameterKey": "AthenaQueryBucketExpirationInDays",
+    "ParameterValue": "{{dataconfig['s3AthenaQueryBucket'][accounts[profile]][region]['AthenaQueryBucketExpirationInDays']}}"
+  },
+  {
+    "ParameterKey": "PopularityResultsBucketExpirationInDays",
+    "ParameterValue": "{{dataconfig['s3PopularityResultsBucket'][accounts[profile]][region]['PopularityResultsBucketExpirationInDays']}}"
+  },
+  {
+    "ParameterKey": "DataTeamARN",
+    "ParameterValue": "{{dataconfig['s3CmsETlDbBucket'][accounts[profile]][region]['DataTeamARN']}}"
+  },
+  {
+    "ParameterKey": "EnableHomescreenStreamParam",
+    "ParameterValue": "{{dataconfig['Homescreen'][accounts[profile]][region]['EnableHomescreenStreamParam']}}"
+  }
+]

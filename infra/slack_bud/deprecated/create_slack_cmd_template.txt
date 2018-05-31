@@ -1,0 +1,131 @@
+"""Implements {cmd} command by {auth}"""
+from __future__ import print_function
+
+import util.slack_ui_util as slack_ui_util
+from util.slack_ui_util import ShowSlackError
+import util.aws_util as aws_util
+import util.bud_helper_util as bud_helper_util
+from cmd_interface import CmdInterface
+
+
+class Cmd{cmd}(CmdInterface):
+
+    def get_help_title(self):
+        """
+        Ruturn short description used in global help summary
+        and title of commands help page
+        """
+        return '{help_title}'
+
+    def get_help_text(self):
+        """
+        Return help text for your command in slack format here.
+        """
+        help_text = "*Format:* _/bud {cmdlowercase} <action> -e <env> -r <region>_\n"
+        help_text += "*Example:* _/bud {cmdlowercase} a -e dev -r us-east-1_\n\n"
+        help_text += "*Example:* _/bud {cmdlowercase} b -e dev -r us-east-1_\n\n"
+        help_text += "*<a>* _Verb A describing subcommand_\n"
+        help_text += "           _additional comments line 1_\n"
+        help_text += "           _additional comments line 2_\n"
+        help_text += "*<b>* _Verb B describing subcommand_\n"
+
+        help_title = self.get_help_title()
+        return slack_ui_util.text_command_response(
+            help_title, help_text, "#00b2ff"
+        )
+
+    def invoke_sub_command(self, sub_command, args, response_url=None, slack_channel=None):
+        """
+        Return help text for your command in slack format here.
+        """
+        try:
+            if sub_command == 'help':
+                return self.get_help_text()
+
+            environments = self.ENVIRONMENTS
+
+            # Call aws_util or bud_help_util method
+
+            print("%s invokes %s" % (self.__class__.__name__, sub_command))
+            if sub_command == 'a':
+                # You need to modify this
+                return handle_a_command(args)  # Adjust as needed
+            if sub_command == 'b':
+                # You need to modify this
+                return handle_b_command(args)  # Adjust as needed
+            title = '{cmd} response'
+            text = 'Hello from command {cmd}'
+            return slack_ui_util.text_command_response(title, text)
+
+        except ShowSlackError as slack_error_message:
+            print(type(slack_error_message))
+            print(slack_error_message.args)
+            print(slack_error_message)
+
+            return slack_ui_util.error_response(slack_error_message)
+
+    def invoke_confirm_command(self, params):
+        """
+        Return help text for your command in slack format here.
+        """
+        try:
+            # This section is for working with confirm
+            # ToDo: Provide a simple working example.
+            return None
+
+        except ShowSlackError as slack_error_message:
+            print(type(slack_error_message))
+            print(slack_error_message.args)
+            print(slack_error_message)
+
+            return slack_ui_util.error_response(slack_error_message)
+
+    def is_confirm_command(self, params):
+        """
+        Return help text for your command in slack format here.
+        """
+        try:
+            fallback_str = self.get_fallback_string_from_payload(params)
+            if fallback_str is None:
+                return False
+            elif fallback_str == self.__class__.__name__:
+                return True
+            return False
+
+        except ShowSlackError as slack_error_message:
+            print(type(slack_error_message))
+            print(slack_error_message.args)
+            print(slack_error_message)
+
+            return False
+
+    def invoke_longtask_command(self, event):
+        """
+        This is where long running tasks are handled
+        """
+        return None
+
+    def set_fallback_value(self):
+        return self.__class__.__name__
+
+
+def handle_a_command(args):
+    """
+    Placeholder for command
+    :param args:
+    :return:
+    """
+    title = '{cmd} response'
+    text = "this is sub-command A"
+    return slack_ui_util.text_command_response(title, text)
+
+
+def handle_b_command(args):
+    """
+    Placeholder for command
+    :param args:
+    :return:
+    """
+    title = '{cmd} response'
+    text = "this is sub-command B"
+    return slack_ui_util.text_command_response(title, text)

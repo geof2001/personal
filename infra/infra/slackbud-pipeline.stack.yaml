@@ -1,0 +1,510 @@
+Description: Stack to update the SlackBud Code. This dependend of the slack-bud and serverless stacks being present.
+
+Resources:
+
+  SlackBudCodePipeline:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      ArtifactStore:
+        Location:
+          Ref: PipelineBucket
+        Type: S3
+      RoleArn: !GetAtt LambdaExecutionRole.Arn
+      Stages:
+        - Name: CheckS3Bucket
+          Actions:
+          - Name: CheckS3Bucket
+            ActionTypeId:
+              Category: Source
+              Owner: AWS
+              Version: '1'
+              Provider: S3
+            OutputArtifacts:
+              - Name: RawCode
+            Configuration:
+              S3Bucket: !Ref PipelineSourceCodeBucket
+              S3ObjectKey: slack-bud-bare-repo-files.zip
+            RunOrder: 1
+        - Name: BuildCode
+          Actions:
+          - Name: UseAwsCodeBuild
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Version: '1'
+              Provider: CodeBuild
+            Configuration:
+              ProjectName: !Ref SlackBudCodeBuild
+            InputArtifacts:
+              - Name: RawCode
+            OutputArtifacts:
+              - Name: LambdaZip
+        - Name: DeployDevLambda
+          Actions:
+          - Name: UpdateDevLambdaAction
+            ActionTypeId:
+              Category: Invoke
+              Owner: AWS
+              Version: '1'
+              Provider: Lambda
+            InputArtifacts:
+              - Name: LambdaZip
+            OutputArtifacts: []
+            Configuration:
+              FunctionName:
+                Ref: UpdateSlackBudDev
+              UserParameters: dev
+            RunOrder: 1
+        - Name: RunTests
+          Actions:
+          - Name: RunTestsAction
+            ActionTypeId:
+              Category: Invoke
+              Owner: AWS
+              Version: '1'
+              Provider: Lambda
+            InputArtifacts:
+              - Name: LambdaZip
+            OutputArtifacts: []
+            Configuration:
+              FunctionName:
+                Ref: TestStageLambda
+            RunOrder: 1
+        - Name: PylintCheck
+          Actions:
+          - Name: PylintCheckCodeBuildVersion
+            ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Version: '1'
+              Provider: CodeBuild
+            Configuration:
+              ProjectName: !Ref PylintCodeBuild
+            InputArtifacts:
+              - Name: RawCode
+            OutputArtifacts:
+              - Name: PylintResult
+        - Name: SendResults
+          Actions:
+          - Name: EmailTestResultsAction
+            ActionTypeId:
+              Category: Invoke
+              Owner: AWS
+              Version: '1'
+              Provider: Lambda
+            InputArtifacts:
+              - Name: PylintResult
+            OutputArtifacts: []
+            Configuration:
+              FunctionName:
+                Ref: EMailTestResultsLambda
+            RunOrder: 1
+        - Name: ManualApproval
+          Actions:
+          - InputArtifacts: []
+            Name: ApproveForProd
+            ActionTypeId:
+              Category: Approval
+              Owner: AWS
+              Version: '1'
+              Provider: Manual
+            OutputArtifacts: []
+            Configuration:
+              NotificationArn: !Ref SNSTopicManualApproval
+              CustomData: Approve to deploy the SlackBud release to production.
+            RunOrder: 1
+        - Name: DeployProdLambda
+          Actions:
+          - Name: UpdateProdLambdaAction
+            ActionTypeId:
+              Category: Invoke
+              Owner: AWS
+              Version: '1'
+              Provider: Lambda
+            InputArtifacts:
+              - Name: LambdaZip
+            OutputArtifacts: []
+            Configuration:
+              FunctionName:
+                Ref: UpdateSlackBudProd
+              UserParameters: prod
+            RunOrder: 1
+
+
+  PipelineBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: "sr-infra-slackbud-pipeline-artifacts"
+      LifecycleConfiguration:
+        Rules:
+        - Id: DeleteObjectsAfter60DaysRule
+          Status: Enabled
+          ExpirationInDays: '60'
+
+  PipelineSourceCodeBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: "sr-infra-pipeline-source"
+      VersioningConfiguration:
+        Status: Enabled
+
+  SNSTopicManualApproval:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Endpoint: "asnyder@roku.com"
+        Protocol: email
+      - Endpoint: "qzhong@roku.com"
+        Protocol: email
+      - Endpoint: "areynolds@roku.com"
+        Protocol: email
+      - Endpoint: "jscott@roku.com"
+        Protocol: email
+
+## Lambda function uploads zip file into a different lambda function, and
+## then is indicates success with a put_job_success_result to aws code-pipeline.
+  UpdateSlackBudDev:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: pipeline-deploy-dev
+      Code:
+        S3Bucket: !ImportValue slackBud-S3DeploymentZipFileBucketName
+        S3Key: "slack-bud-output/slack-bud-lambda.zip"
+      Handler: pipeline.lambda_deploy_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python2.7
+      Timeout: '180'
+      Environment:
+        Variables:
+          cf_template_var: serverless-slackbud-dev-slackBud
+          deply_stage: dev
+
+  # This should be the same lambda function as the dev update.
+  # Will consolidate as soon a figure out how to pass parameter to lambda
+  # function from code-pipeline.   This is just for a proof of concept for the
+  # dev to prod approval process. (Will want to insert automatic testing and notification steps.)
+  UpdateSlackBudProd:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: pipeline-deploy-prod
+      Code:
+        S3Bucket: !ImportValue slackBud-S3DeploymentZipFileBucketName
+        S3Key: "slack-bud-output/slack-bud-lambda.zip"
+      Handler: pipeline.lambda_deploy_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python2.7
+      Timeout: '180'
+      Environment:
+        Variables:
+          cf_template_var: serverless-slackbud-prod-slackBud
+          deply_stage: prod
+
+  TestStageLambda:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: pipeline-run-tests
+      Code:
+        S3Bucket: !ImportValue slackBud-S3DeploymentZipFileBucketName
+        S3Key: "slack-bud-output/slack-bud-lambda.zip"
+      Handler: pipeline.lambda_smoke_and_unit_test_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python2.7
+      Timeout: '180'
+
+  EMailTestResultsLambda:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: pipeline-send-test-results
+      Code:
+        S3Bucket: !ImportValue slackBud-S3DeploymentZipFileBucketName
+        S3Key: "slack-bud-output/slack-bud-lambda.zip"
+      Handler: pipeline.lambda_send_email_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: python2.7
+      Timeout: '60'
+
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+            - codepipeline.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - sts:AssumeRole
+            - iam:GetRole
+            - iam:PassRole
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - sts:AssumeRole
+            - iam:GetRole
+            - iam:PassRole
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Effect: Allow
+            Resource: arn:aws:logs:*:*:*
+          - Action:
+            - lambda:*
+            - s3:*
+            - codepipeline:*
+            - codebuild:*
+            - sns:Publish
+            - ses:SendRawEmail
+            Effect: Allow
+            Resource: '*'
+          Version: '2012-10-17'
+        PolicyName: pipeline-update-code-policy
+
+  SlackBudCodeBuild:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Name: slack-bud-lambda-build
+      Description: Build python with dependencies
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: slack_bud/buildspec.yml
+      TimeoutInMinutes: 60
+      ServiceRole: !GetAtt SlackBudCodeBuildRole.Arn
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: python:2.7.12
+        Type: LINUX_CONTAINER
+      Artifacts:
+        Type: CODEPIPELINE
+
+  PylintCodeBuild:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Name: pylint-check-build
+      Description: Run Pylint check from CodeBuild
+      Source:
+        Type: S3
+        Location: arn:aws:s3:::sr-infra-pipeline-source/slack-bud-bare-repo-files.zip
+        BuildSpec: slack_bud/buildspec-pylint.yml
+      TimeoutInMinutes: 20
+      ServiceRole: !GetAtt SlackBudCodeBuildRole.Arn
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: python:2.7.12
+        Type: LINUX_CONTAINER
+      Artifacts:
+        Type: NO_ARTIFACTS
+
+  ServerlessDeployCodeBuild:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Name: serverlesss-deploy-build
+      Description: Deploy Serverlesss Framework
+      Source:
+        Type: S3
+        Location: arn:aws:s3:::sr-infra-pipeline-source/slack-bud-bare-repo-files.zip
+        BuildSpec: slack_bud/buildspec-serverless.yml
+      TimeoutInMinutes: 60
+      ServiceRole: !GetAtt SlackBudCodeBuildRole.Arn
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/nodejs:7.0.0
+        Type: LINUX_CONTAINER
+      Artifacts:
+        Type: NO_ARTIFACTS
+
+  SlackBudCodeBuildRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Resource:
+            - arn:aws:logs:us-west-2:661796028321:log-group:/aws/codebuild/*
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          - Effect: Allow
+            Resource:
+            - arn:aws:s3:::codepipeline-us-west-2-*
+            Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:GetObjectVersion
+          - Effect: Allow
+            Resource:
+            - arn:aws:s3:::sr-infra-pipeline-source/slack-bud-bare-repo-files.zip
+            Action:
+            - s3:List*
+            - s3:GetObject
+            - s3:GetObjectVersion
+          - Effect: Allow
+            Resource:
+            - arn:aws:s3:::sr-infra-pipeline-source/*
+            Action:
+            - s3:GetObject
+            - s3:GetObjectVersion
+            - s3:PutObject
+            - s3:List*
+            - s3:CreateBucket
+          - Effect: Allow
+            Action:
+            - ssm:GetParameters
+            Resource: arn:aws:ssm:us-west-2:661796028321:parameter/CodeBuild/*
+          - Action:
+            - cloudformation:*
+            - s3:*
+            - apigateway:*
+            - logs:*
+            - iam:*
+            - lambda:*
+            - ec2:*
+            Resource: "*"
+            Effect: Allow
+        PolicyName: slack-bud-code-build-policy
+
+#  LongSlackTasksLambda:
+  GitDiffLambda:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: slackbud-longtasks
+      Handler: "lambda_longtasks.lambda_handler"
+      Code:
+        S3Bucket: !ImportValue slackBud-S3DeploymentZipFileBucketName
+        S3Key: "slack-bud-output/slack-bud-lambda.zip"
+      Role:
+        Fn::GetAtt:
+          - "SlackBudLambdaRole"
+          - "Arn"
+      Runtime: "python2.7"
+      Timeout: "300"
+      MemorySize: 512
+      Environment:
+        Variables:
+          slackToken: dzwpUtzsi7vgvkGmjUYj0Jpl
+          jenkinsToken: REGRESSIONISGOOD
+          jenkinsUrl: http://ip-10-222-1-122.us-west-2.compute.internal:32871/job/z_gcuni_deploycomputestack/
+      VpcConfig:
+        SubnetIds:
+          - subnet-5d4d832b
+        SecurityGroupIds:
+          - sg-f7010290
+#      ReservedConcurrentExecutions: 2
+
+
+  LongSlackTasksLambdaDev:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: slackbud-longtasks-dev
+      Handler: "lambda_longtasks.lambda_handler"
+      Code:
+        S3Bucket: !ImportValue slackBud-S3DeploymentZipFileBucketName
+        S3Key: "slack-bud-output/slack-bud-lambda.zip"
+      Role:
+        Fn::GetAtt:
+          - "SlackBudLambdaRole"
+          - "Arn"
+      Runtime: "python2.7"
+      Timeout: "300"
+      MemorySize: 512
+      Environment:
+        Variables:
+          slackToken: p95izu9WnS9sdiqPxbCQKi3r
+          jenkinsToken: REGRESSIONISGOOD
+          jenkinsUrl: http://ip-10-222-1-122.us-west-2.compute.internal:32871/job/z_gcuni_deploycomputestack/
+      VpcConfig:
+        SubnetIds:
+          - subnet-5d4d832b
+        SecurityGroupIds:
+          - sg-f7010290
+#      ReservedConcurrentExecutions: 2
+
+  SlackBudLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - lambda:*
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            - ec2:CreateNetworkInterface
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DeleteNetworkInterface
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - dynamodb:Describe*
+            - dynamodb:List*
+            - dynamodb:Update*
+            - dynamodb:Get*
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchGetItem
+            - dynamodb:BatchWriteItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - es:*
+            Effect: Allow
+            Resource: 'arn:aws:es:us-west-2:661796028321:*'
+          - Action:
+            - sts:AssumeRole
+            - iam:GetRole
+            - iam:PassRole
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - route53:Change*
+            - route53:Create*
+            - route53:DeleteTraffic*
+            - route53:DeleteHealthCheck
+            - route53:Get*
+            - route53:List*
+            - route53:Test*
+            - route53:Update*
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - s3:*
+            Effect: Allow
+            Resource:
+              - 'arn:aws:s3:::sr-infra-pipeline-source'
+              - 'arn:aws:s3:::sr-infra-pipeline-source/*'
+          Version: '2012-10-17'
+        PolicyName: slack-bud-lambda-policy

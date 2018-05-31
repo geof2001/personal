@@ -1,0 +1,11 @@
+[
+    {
+        "ParameterKey": "CloudFrontJWTToken",
+        "ParameterValue": "{{cfgmap['token']}}",
+        "UsePreviousValue": "{{cfgmap['UPV']}}"
+    },
+    {
+        "ParameterKey": "JwtTokenAuthenticationStackName",
+        "ParameterValue": "{{cfgmap['tokenstack']}}"
+    }
+]

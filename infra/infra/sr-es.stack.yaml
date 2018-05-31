@@ -1,0 +1,146 @@
+Description: Template specifying the experimental elasticsearch configuration
+
+Parameters:
+  ElasticsearchWhitelistedIPs:
+    Default: 50.224.7.192/26,50.224.7.64/26,50.224.7.32/27,50.224.7.128/26,52.8.254.63/32,216.38.147.4/32,52.40.46.133/32
+    Description: List of whitelisted IPs for ElasticSearch
+    Type: CommaDelimitedList
+
+Conditions:
+  DeployMultiRegion: !Or [!Equals [!Ref "AWS::Region", 'us-east-1'], !Equals [!Ref "AWS::Region", 'us-west-2']]
+  SearchElasticsearchEbsVolumeEnabled: !Equals [!FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearchEBSOptionsEBSEnabled], 'true']
+  DeploySearch6Elasticsearch: !And
+    - !Or
+      - !Equals [!Ref "AWS::AccountId", '638782101961']
+      - !Equals [!Ref "AWS::AccountId", '181133766305']
+      - !Equals [!Ref "AWS::AccountId", '886239521314']
+    - !Or
+      - !Equals [!Ref "AWS::Region", 'us-east-1']
+      - !Equals [!Ref "AWS::Region", 'us-west-2']
+
+Mappings:
+  AccountMap:
+    eu-west-1:
+      '181133766305': 181133766305.eu-west-1
+      '638782101961': 638782101961.eu-west-1
+      '886239521314': 886239521314.eu-west-1
+    us-east-1:
+      '181133766305': 181133766305.us-east-1
+      '638782101961': 638782101961.us-east-1
+      '886239521314': 886239521314.us-east-1
+    us-west-2:
+      '181133766305': 181133766305.us-west-2
+      '638782101961': 638782101961.us-west-2
+      '886239521314': 886239521314.us-west-2
+
+  RegionMap:
+    638782101961.us-east-1:
+      SearchElasticsearchVersion: 6.0
+      SearchElasticsearch6ClusterConfigDedicatedMasterCount: 3
+      SearchElasticsearch6ClusterConfigInstanceCount: 4
+      SearchElasticsearchClusterConfigDedicatedMasterEnabled: 'true'
+      SearchElasticsearchClusterConfigDedicatedMasterType: 'm4.xlarge.elasticsearch'
+      SearchElasticsearch6ClusterConfigInstanceType: 'i3.4xlarge.elasticsearch'
+      SearchElasticsearchClusterConfigZoneAwarenessEnabled: 'true'
+      SearchElasticsearchEBSOptionsEBSEnabled: 'false'
+      SearchElasticsearchEBSOptionsVolumeSize: 500
+      SearchElasticsearchEBSOptionsVolumeType: 'gp2'
+    638782101961.us-west-2:
+      SearchElasticsearchVersion: 6.0
+      SearchElasticsearch6ClusterConfigDedicatedMasterCount: 3
+      SearchElasticsearch6ClusterConfigInstanceCount: 4
+      SearchElasticsearchClusterConfigDedicatedMasterEnabled: 'true'
+      SearchElasticsearchClusterConfigDedicatedMasterType: 'm4.xlarge.elasticsearch'
+      SearchElasticsearch6ClusterConfigInstanceType: 'i3.4xlarge.elasticsearch'
+      SearchElasticsearchClusterConfigZoneAwarenessEnabled: 'true'
+      SearchElasticsearchEBSOptionsEBSEnabled: 'false'
+      SearchElasticsearchEBSOptionsVolumeSize: 500
+      SearchElasticsearchEBSOptionsVolumeType: 'gp2'
+    181133766305.us-east-1:
+      SearchElasticsearchVersion: 6.0
+      SearchElasticsearch6ClusterConfigDedicatedMasterCount: 3
+      SearchElasticsearch6ClusterConfigInstanceCount: 4
+      SearchElasticsearchClusterConfigDedicatedMasterEnabled: 'true'
+      SearchElasticsearchClusterConfigDedicatedMasterType: 'm4.xlarge.elasticsearch'
+      SearchElasticsearch6ClusterConfigInstanceType: 'i3.4xlarge.elasticsearch'
+      SearchElasticsearchClusterConfigZoneAwarenessEnabled: 'true'
+      SearchElasticsearchEBSOptionsEBSEnabled: 'false'
+      SearchElasticsearchEBSOptionsVolumeSize: 500
+      SearchElasticsearchEBSOptionsVolumeType: 'gp2'
+    886239521314.us-east-1:
+      SearchElasticsearchVersion: 6.0
+      SearchElasticsearch6ClusterConfigDedicatedMasterCount: 3
+      SearchElasticsearch6ClusterConfigInstanceCount: 8
+      SearchElasticsearchClusterConfigDedicatedMasterEnabled: 'true'
+      SearchElasticsearchClusterConfigDedicatedMasterType: 'm4.xlarge.elasticsearch'
+      SearchElasticsearch6ClusterConfigInstanceType: 'i3.4xlarge.elasticsearch'
+      SearchElasticsearchClusterConfigZoneAwarenessEnabled: 'true'
+      SearchElasticsearchEBSOptionsEBSEnabled: 'false'
+      SearchElasticsearchEBSOptionsVolumeSize: 500
+      SearchElasticsearchEBSOptionsVolumeType: 'gp2'
+    886239521314.us-west-2:
+      SearchElasticsearchVersion: 6.0
+      SearchElasticsearch6ClusterConfigDedicatedMasterCount: 3
+      SearchElasticsearch6ClusterConfigInstanceCount: 8
+      SearchElasticsearchClusterConfigDedicatedMasterEnabled: 'true'
+      SearchElasticsearchClusterConfigDedicatedMasterType: 'm4.xlarge.elasticsearch'
+      SearchElasticsearch6ClusterConfigInstanceType: 'i3.4xlarge.elasticsearch'
+      SearchElasticsearchClusterConfigZoneAwarenessEnabled: 'true'
+      SearchElasticsearchEBSOptionsEBSEnabled: 'false'
+      SearchElasticsearchEBSOptionsVolumeSize: 500
+      SearchElasticsearchEBSOptionsVolumeType: 'gp2'
+
+Resources:
+  Search6ElasticsearchCluster:
+    Type: "AWS::Elasticsearch::Domain"
+    Condition: DeploySearch6Elasticsearch
+    Properties:
+      AccessPolicies:
+        Statement:
+        - Action:
+          - es:ESHttpDelete
+          - es:ESHttpGet
+          - es:ESHttpHead
+          - es:ESHttpPost
+          - es:ESHttpPut
+          - es:Describe*
+          - es:List*
+          Condition:
+            IpAddress:
+              "aws:SourceIp": !Ref ElasticsearchWhitelistedIPs
+          Effect: Allow
+          Principal:
+            AWS: '*'
+          Resource: '*'
+          Sid: ''
+        Version: '2012-10-17'
+      AdvancedOptions:
+        indices.fielddata.cache.size: 40
+      DomainName: sr-es-6
+      ElasticsearchVersion: 6.0
+      EBSOptions:
+        EBSEnabled: !If [SearchElasticsearchEbsVolumeEnabled, !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearchEBSOptionsEBSEnabled], !Ref "AWS::NoValue"]
+        VolumeSize: !If [SearchElasticsearchEbsVolumeEnabled, !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearchEBSOptionsVolumeSize], !Ref "AWS::NoValue"]
+        VolumeType: !If [SearchElasticsearchEbsVolumeEnabled, !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearchEBSOptionsVolumeType], !Ref "AWS::NoValue"]
+      ElasticsearchClusterConfig:
+        DedicatedMasterCount: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearch6ClusterConfigDedicatedMasterCount]
+        DedicatedMasterEnabled: 'true'
+        DedicatedMasterType: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearchClusterConfigDedicatedMasterType]
+        InstanceCount: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearch6ClusterConfigInstanceCount]
+        InstanceType: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearch6ClusterConfigInstanceType]
+        ZoneAwarenessEnabled: !FindInMap [RegionMap, !FindInMap [AccountMap, !Ref "AWS::Region", !Ref "AWS::AccountId"], SearchElasticsearchClusterConfigZoneAwarenessEnabled]
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: 10
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: search
+
+Outputs:
+  Search6EsEndpoint:
+    Description: Search Elasticsearch Endpoint
+    Condition: DeploySearch6Elasticsearch
+    Value: !Join ['', ["http://", !GetAtt Search6ElasticsearchCluster.DomainEndpoint]]
+    Export:
+      Name: !Sub ${AWS::StackName}-Search6EsEndpoint

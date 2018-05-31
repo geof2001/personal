@@ -1,0 +1,61 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo COMMANDS phase...
+      - echo Build started on `date`
+      - apt-get update -y
+      - echo Installing AWS CLI
+      - pip install awscli --upgrade
+      - echo Adding code dependencies for project
+      - pip install requests_aws_sign -t ./slack-bud/slack-bud
+      - pip install elasticsearch -t ./slack-bud/slack-bud
+      - pip install requests -t ./slack-bud/slack-bud
+      - pip install python-gitlab -t ./slack-bud/slack-bud
+      - pip install PyGitHub -t ./slack-bud/slack-bud
+      - pip install requests[security] -t ./slack-bud/slack-bud
+      - pip install troposphere -t ./slack-bud/slack-bud
+      - pip install pytz -t ./slack-bud/slack-bud
+  pre_build:
+    commands:
+      - echo PRE_BUILD phase... verifying state
+      - echo `which python`
+      - echo `python --version`
+      - echo `aws --version`
+  build:
+    commands:
+      - echo BUILD phase...
+      - echo Create build_info file.
+      - cd ./slack-bud
+      - echo `pwd`
+      - echo `ls`
+      - echo Get githook_info.txt file from S3
+      - aws s3 cp s3://sr-infra-pipeline-source/githook_info.txt githook_info.txt
+      - echo Building
+      - cp *.py ./slack-bud
+      - cp *.txt ./slack-bud
+      - mkdir ./slack-bud/cmd
+      - cp ./cmd/*.py ./slack-bud/cmd
+      - mkdir ./slack-bud/util
+      - cp ./util/*.py ./slack-bud/util
+      - mkdir ./slack-bud/cmds
+      - cp ./cmds/*.py ./slack-bud/cmds
+      - cd ./slack-bud
+      - echo `pwd`
+      - echo `ls`
+      - echo `python pipeline.py`
+      - cp build_info.txt ./cmd
+      - aws s3 cp build_info.txt s3://sr-infra-pipeline-source
+  post_build:
+    commands:
+      - echo POST_BUILD phase...
+      - echo Run unit tests
+      - echo `pwd`
+      - echo `python z_unit_tests.py 2> unit-test.txt`
+      - aws s3 cp unit-test.txt s3://sr-infra-pipeline-source
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: slack-bud/slack-bud

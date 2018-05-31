@@ -1,0 +1,3 @@
+        elif task == 'Cmd{cmd}':
+            cmd_class = Cmd{cmd}(cmd_inputs)
+# {cmdlongtaskswitchline}

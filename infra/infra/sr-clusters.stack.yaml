@@ -1,0 +1,297 @@
+Description: Template specifying the configuration of Batch and Service ECS clusters
+
+Conditions:
+  DeployEastRegionOnly: !Equals [!Ref "AWS::Region", 'us-east-1']
+  DeployMultiRegion: !Or
+    - !Equals [!Ref "AWS::Region", 'us-east-1']
+    - !Equals [!Ref "AWS::Region", 'us-west-2']
+
+Parameters:
+  BatchClusterMinSize:
+    Default: '1'
+    Description: Min size for ECS Batch Cluster
+    Type: String
+  BatchClusterMaxSize:
+    Default: '2'
+    Description: Max size for ECS Batch Cluster
+    Type: String
+  BatchClusterRollSize:
+    Default: '1'
+    Description: Number of instances to roll at a time during an upgrade of batch cluster
+    Type: String
+  DataStackName:
+    AllowedPattern: \S+
+    Default: sr-data
+    Description: Name of data stack
+    Type: String
+  ECSStackName:
+    Type: String
+    Description: Name of ECS stack
+    Default: sr-blue
+    AllowedPattern: \S+
+  SearchDataStackName:
+    AllowedPattern: \S+
+    Default: sr-search
+    Description: Name of data stack
+    Type: String
+  NetworkStackName:
+    AllowedPattern: \S+
+    Default: roku-network
+    Description: Name of network stack
+    Type: String
+  
+Mappings:
+  AccountMap:
+    '638782101961':
+      awscert: "14a96f17-ba24-4e0f-a1b3-a317f76a0e0e"
+      name: dev.
+      env: .dev.sr.roku.com
+      serviceecsboot: 20180205-jenkins-190
+      batchecsboot: 20180205-jenkins-190
+      datafetcherecsboot: 20180205-jenkins-190
+      haproxyboot: 20180205-jenkins-190
+      registrar: 638782101961.dkr.ecr.us-east-1.amazonaws.com/registrar:master-db7ccaf-20180404-6846
+      extgateway: 638782101961.dkr.ecr.us-east-1.amazonaws.com/gateway:master-c469f1b-20170926-4570
+      intgateway: 638782101961.dkr.ecr.us-east-1.amazonaws.com/gateway:master-c469f1b-20170926-4570
+      xray: 638782101961.dkr.ecr.us-east-1.amazonaws.com/x-ray:xray-2x-20171018-7
+      legacytfs: 638782101961.dkr.ecr.us-east-1.amazonaws.com/tfs:master-da8d992-20171030-4995
+
+    '181133766305':
+      awscert: "96439d78-b962-45ce-9c96-5f37b47b918b"
+      name: qa.
+      env: .qa.sr.roku.com
+      serviceecsboot: 20180205-jenkins-190
+      batchecsboot: 20180205-jenkins-190
+      datafetcherecsboot: 20180205-jenkins-190
+      haproxyboot: 20180205-jenkins-190
+      registrar: 638782101961.dkr.ecr.us-east-1.amazonaws.com/registrar:master-db7ccaf-20180404-6846
+      extgateway: 638782101961.dkr.ecr.us-east-1.amazonaws.com/gateway:master-c469f1b-20170926-4570
+      intgateway: 638782101961.dkr.ecr.us-east-1.amazonaws.com/gateway:master-c469f1b-20170926-4570
+      xray: 638782101961.dkr.ecr.us-east-1.amazonaws.com/x-ray:xray-2x-20171018-7
+      legacytfs: 638782101961.dkr.ecr.us-east-1.amazonaws.com/tfs:master-da8d992-20171030-4995
+
+    '886239521314':
+      awscert: "59dd02c9-33b9-4c66-b078-8d057fee3a7f"
+      name: ''
+      env: .sr.roku.com
+      serviceecsboot: 20180205-jenkins-190
+      batchecsboot: 20180205-jenkins-190
+      datafetcherecsboot: 20180205-jenkins-190
+      haproxyboot: 20180205-jenkins-190
+      registrar: 638782101961.dkr.ecr.us-east-1.amazonaws.com/registrar:master-db7ccaf-20180404-6846
+      extgateway: 638782101961.dkr.ecr.us-east-1.amazonaws.com/gateway:master-c469f1b-20170926-4570
+      intgateway: 638782101961.dkr.ecr.us-east-1.amazonaws.com/gateway:master-c469f1b-20170926-4570
+      xray: 638782101961.dkr.ecr.us-east-1.amazonaws.com/x-ray:xray-2x-20171018-7
+      legacytfs: 638782101961.dkr.ecr.us-east-1.amazonaws.com/tfs:master-1a3cf1cd35-20170509-3154
+
+  ECSAMIMap:
+    us-east-1:
+      '638782101961': ami-a7a242da #amzn-ami-2017.09.i-amazon-ecs-optimized
+      '181133766305': ami-a7a242da #amzn-ami-2017.09.i-amazon-ecs-optimized
+      '886239521314': ami-a7a242da #amzn-ami-2017.09.i-amazon-ecs-optimized
+
+    'us-west-2':
+      '638782101961': ami-92e06fea #amzn-ami-2017.09.i-amazon-ecs-optimized
+      '181133766305': ami-92e06fea #amzn-ami-2017.09.i-amazon-ecs-optimized
+      '886239521314': ami-92e06fea #amzn-ami-2017.09.i-amazon-ecs-optimized
+
+    'eu-west-1':
+      '638782101961': ami-0693ed7f #amzn-ami-2017.09.i-amazon-ecs-optimized
+      '181133766305': ami-0693ed7f #amzn-ami-2017.09.i-amazon-ecs-optimized
+      '886239521314': ami-0693ed7f #amzn-ami-2017.09.i-amazon-ecs-optimized
+
+Resources:
+  
+  BatchCluster:
+    Type: "AWS::ECS::Cluster"
+    Condition: DeployMultiRegion
+
+  ECSBatchHighMemoryReservationAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Condition: DeployMultiRegion
+    Properties:
+      AlarmActions:
+      - Ref: ECSBatchScaleUpPolicy
+      AlarmDescription: Alarm if memory reservation on the batch cluster is high so
+        it can be scaled up
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: ClusterName
+        Value: !Ref BatchCluster
+      EvaluationPeriods: '1'
+      MetricName: MemoryReservation
+      Namespace: AWS/ECS
+      Period: '60'
+      Statistic: Average
+      Threshold: '50'
+
+  ECSBatchLowMemoryReservationAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Condition: DeployMultiRegion
+    Properties:
+      AlarmActions:
+      - Ref: ECSBatchScaleDownPolicy
+      AlarmDescription: Alarm if memory reservation on the batch cluster is low so
+        it can be scaled down
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+      - Name: ClusterName
+        Value: !Ref BatchCluster
+      EvaluationPeriods: '15'
+      MetricName: MemoryReservation
+      Namespace: AWS/ECS
+      Period: '120'
+      Statistic: Average
+      Threshold: '30'
+
+  ECSBatchScaleDownPolicy:
+    Type: "AWS::AutoScaling::ScalingPolicy"
+    Condition: DeployMultiRegion
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref ECSBatchASG
+      PolicyType: StepScaling
+      EstimatedInstanceWarmup: 300
+      StepAdjustments:
+        -
+          MetricIntervalUpperBound: 0
+          ScalingAdjustment: -1
+
+  ECSBatchScaleUpPolicy:
+    Type: "AWS::AutoScaling::ScalingPolicy"
+    Condition: DeployMultiRegion
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref ECSBatchASG
+      Cooldown: '300'
+      ScalingAdjustment: '3'
+
+  ecsBatchHealthCheckELB:
+    Type: "AWS::ElasticLoadBalancing::LoadBalancer"
+    Condition: DeployMultiRegion
+    Properties:
+      Subnets:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-SubnetA"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-SubnetB"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-SubnetC"
+      HealthCheck:
+        Target: HTTP:8000/healthcheck
+        HealthyThreshold: '3'
+        UnhealthyThreshold: '10'
+        Interval: '27'
+        Timeout: '5'
+      Listeners:
+      - InstancePort: '9000'
+        LoadBalancerPort: '80'
+        Protocol: HTTP
+      Scheme: internal
+      SecurityGroups:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-InstanceSecurityGroup"
+      Tags:
+      - Key: Department
+        Value: SR
+      - Key: Spend_Category
+        Value: ecs-batch
+
+  ECSBatchASG:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Condition: DeployMultiRegion
+    Properties:
+      AvailabilityZones:
+      - Fn::ImportValue: !Sub "${NetworkStackName}-AZ1"
+      - Fn::ImportValue: !Sub "${NetworkStackName}-AZ2"
+      - Fn::ImportValue: !Sub "${NetworkStackName}-AZ3"
+      Cooldown: '30'
+      HealthCheckGracePeriod: 600
+      HealthCheckType: ELB
+      LoadBalancerNames:
+        - Ref: "ecsBatchHealthCheckELB"
+      LaunchConfigurationName: !Ref ecsBatchLaunchConfig
+      MaxSize: !Ref BatchClusterMaxSize
+      MetricsCollection:
+      - Granularity: 1Minute
+      MinSize: !Ref BatchClusterMinSize
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: 'true'
+        Value: ECS-Batch-Cluster
+      - Key: Department
+        PropagateAtLaunch: 'true'
+        Value: SR
+      - Key: Spend_Category
+        PropagateAtLaunch: 'true'
+        Value: ecs-batch
+      VPCZoneIdentifier:
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnetA"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnetB"
+        - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnetC"
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: !Ref BatchClusterRollSize
+        PauseTime: PT15M
+        MinSuccessfulInstancesPercent: 80
+        WaitOnResourceSignals: true
+
+  ecsBatchLaunchConfig:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Condition: DeployMultiRegion
+    Properties:
+      AssociatePublicIpAddress: 'false'
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: '60'
+          VolumeType: gp2
+      EbsOptimized: 'false'
+      IamInstanceProfile:
+        Fn::ImportValue: !Sub "${NetworkStackName}-InstanceProfile"
+      ImageId: !FindInMap [ECSAMIMap, !Ref "AWS::Region", !Ref "AWS::AccountId"]
+      InstanceMonitoring: 'true'
+      InstanceType: m5.large
+      SecurityGroups:
+      - Fn::ImportValue: !Sub "${NetworkStackName}-InstanceSecurityGroup"
+      UserData:
+        "Fn::Base64":
+          !Sub
+            - |-
+              #!/bin/sh
+              set -x
+              echo ECS_CLUSTER=${BatchCluster} >> /etc/ecs/ecs.config
+              export CLOUD_APP=ecs
+              export EFS_ID=${efsid}
+              export AWS_REGION=${regionid}
+              yum update --exclude=ecs-init --exclude=docker --exclude=docker-devel --exclude=docker-pkg-devel -y
+              yum install -y aws-cli openssl-devel nfs-utils amazon-ssm-agent
+              export ECS_BOOT_VERSION=${boot}
+              export SERVICE_DISCOVERY_TABLE=${ServiceDiscoveryTable}
+              export SERVICE_DISCOVERY_COUNTER_TABLE=${ServiceDiscoveryChangeCountersTable}
+              export REGISTRAR_IMG=${registrar}
+              export GATEWAY_IMG=${gateway}
+              export XRAY_IMG=${xray}
+              echo '* hard nofile 100000' | tee -a /etc/security/limits.conf
+              echo '* soft nofile 100000' | tee -a /etc/security/limits.conf
+              ulimit -n 100000
+              aws s3 cp --quiet --recursive s3://roku-ecs-boot/$ECS_BOOT_VERSION/  /usr/local/bin/
+              chmod u+rx /usr/local/bin/*.sh /usr/local/bin/*.py
+              start amazon-ssm-agent
+              /usr/local/bin/initialize_ecs_at_startup.sh 2>&1 >> /tmp/initialize_ecs_at_startup.log
+              /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSBatchASG --region ${AWS::Region}
+            -
+              boot: !FindInMap [AccountMap, !Ref "AWS::AccountId", batchecsboot]
+              registrar: !FindInMap [AccountMap, !Ref "AWS::AccountId", registrar]
+              gateway: !FindInMap [AccountMap, !Ref "AWS::AccountId", intgateway]
+              xray: !FindInMap [AccountMap, !Ref "AWS::AccountId", xray]
+              ServiceDiscoveryTable:
+                Fn::ImportValue: !Sub "${ECSStackName}-ServiceDiscoveryTable"
+              ServiceDiscoveryChangeCountersTable:
+                Fn::ImportValue: !Sub "${ECSStackName}-ServiceDiscoveryChangeCountersTable"
+              efsid:
+                Fn::ImportValue: !Sub "${SearchDataStackName}-SearchRsyncEFS"
+              regionid: !Ref "AWS::Region"
+  
+Outputs:
+  BatchCluster:
+    Description: BatchCluster ID for stack
+    Value: !Ref BatchCluster
+    Export:
+      Name: !Sub ${AWS::StackName}-BatchCluster
