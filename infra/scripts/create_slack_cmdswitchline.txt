@@ -1,3 +1,0 @@
-        elif command == '{cmdlowercase}':
-            cmd_class = Cmd{cmd}(cmd_inputs)
-# {cmdswitchline}

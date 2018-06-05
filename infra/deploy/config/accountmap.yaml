@@ -1,7 +1,0 @@
-accounts:
-  "638782101961": dev
-  "181133766305": qa
-  "886239521314": prod
-  admin-dev: dev
-  admin-qa: qa
-  admin-prod: prod

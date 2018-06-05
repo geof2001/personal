@@ -1,3 +1,0 @@
-        if sub_cmd == 'create':
-            return self.invoke_longtask_command(cmd_inputs)
-# {longtask_sub_commands}

@@ -1,3 +1,0 @@
-                if fallback_value == 'Cmd{cmd}':
-                    return Cmd{cmd}().invoke_confirm_command(params)
-# {cmdconfirmsline}
